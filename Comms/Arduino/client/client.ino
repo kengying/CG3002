@@ -84,15 +84,27 @@ void initRun(void *p){
  *  Read Value
  */
 void sensorValues() {
-      /* Hand Values */
-      data.sensor1ID[0] = 1;
+      /** 
+       * Hand Values 
+       * Accelerometer 
+       * -> x: 0, y: 1, z: 2
+       * Gyroscope 
+       * -> x: 3, y: 4, z: 5
+       */
+      data.sensor1ID[0] = 1; 
       data.sensor1ID[1] = 2;
       data.sensor1ID[2] = 3;
       data.sensor1ID[3] = 4;
       data.sensor1ID[4] = 5;
       data.sensor1ID[5] = 6;
 
-      /* Elbow Values */
+      /** 
+       * Elbow Values
+       * Accelerometer 
+       * -> x: 0, y: 1, z: 2
+       * Gyroscope 
+       * -> x: 3, y: 4, z: 5
+       */
       data.sensor2ID[0] = -1;
       data.sensor2ID[1] = -2;
       data.sensor2ID[2] = -3;
@@ -103,6 +115,14 @@ void sensorValues() {
 }
 
 void battValues() {
+  /** 
+       * Batt Values
+       * batt[0]: voltage
+       * batt[1]: current
+       * batt[2]: power
+       * batt[3]: cumpower
+       * TBD: calculation for cumpower
+  */
   Serial.println("Reading batt");
   data.batt[0] = 1;
   data.batt[1] = 2;
