@@ -6,8 +6,10 @@
 SemaphoreHandle_t xSemaphore;
 
 typedef struct DataPacket{
-  float sensor1ID[6];
-  float sensor2ID[6];
+  int sensor1ID;
+  float sensor1[6];
+  int sensor2ID;
+  float sensor2[6];
   float batt[4];
 } DataPacket;
 
@@ -24,7 +26,7 @@ void setup() {
   Serial2.begin(115200);
   Serial.println("SET UP");
   
-  //startHandshake();
+  startHandshake();
   
   xSemaphore = xSemaphoreCreateBinary();
   if ( ( xSemaphore ) != NULL ) {
@@ -91,13 +93,13 @@ void sensorValues() {
        * Gyroscope 
        * -> x: 3, y: 4, z: 5
        */
-      data.sensor1ID[0] = 1; 
-      data.sensor1ID[1] = 2;
-      data.sensor1ID[2] = 3;
-      data.sensor1ID[3] = 4;
-      data.sensor1ID[4] = 5;
-      data.sensor1ID[5] = 6;
-
+      data.sensor1ID = 1;
+      data.sensor1[0] = 1; 
+      data.sensor1[1] = 2;
+      data.sensor1[2] = 3;
+      data.sensor1[3] = 4;
+      data.sensor1[4] = 5.1;
+      data.sensor1[5] = 6.1;
       /** 
        * Elbow Values
        * Accelerometer 
@@ -105,12 +107,13 @@ void sensorValues() {
        * Gyroscope 
        * -> x: 3, y: 4, z: 5
        */
-      data.sensor2ID[0] = -1;
-      data.sensor2ID[1] = -2;
-      data.sensor2ID[2] = -3;
-      data.sensor2ID[3] = -4;
-      data.sensor2ID[4] = -5;
-      data.sensor2ID[5] = -6;
+      data.sensor2ID = 2;
+      data.sensor2[0] = -1;
+      data.sensor2[1] = -2;
+      data.sensor2[2] = -3;
+      data.sensor2[3] = -4;
+      data.sensor2[4] = -5;
+      data.sensor2[5] = -6;
       
 }
 
@@ -124,10 +127,10 @@ void battValues() {
        * TBD: calculation for cumpower
   */
   Serial.println("Reading batt");
-  data.batt[0] = 1;
-  data.batt[1] = 2;
-  data.batt[2] = 3;
-  data.batt[3] = 4;
+  data.batt[0] = 1.1;
+  data.batt[1] = 2.1;
+  data.batt[2] = 3.11;
+  data.batt[3] = 4.1;
 }
 
 void packageData() {
@@ -135,22 +138,34 @@ void packageData() {
   //Clear the dataBuffer
   memset(dataBuffer, 0, sizeof(dataBuffer));
   char floatChar[0];
+  
+  dtostrf(data.sensor1ID, 0, 0, floatChar);
+  strcat(dataBuffer, floatChar);
+  strcat(dataBuffer, ",");
+  Serial2.write(floatChar);
+  Serial2.write(",");
   for(int i = 0; i < 6; i++){
-    dtostrf(data.sensor1ID[i], 3, 2, floatChar);
+    dtostrf(data.sensor1[i], 3, 2, floatChar);
     strcat(dataBuffer, floatChar);
     strcat(dataBuffer, ",");
     Serial2.write(floatChar);
     Serial2.write(",");
   }
+  
+  dtostrf(data.sensor2ID, 0, 0, floatChar);
+  strcat(dataBuffer, floatChar);
+  strcat(dataBuffer, ",");
+  Serial2.write(floatChar);
+  Serial2.write(",");
   for(int i = 0; i < 6; i++){
-    dtostrf(data.sensor2ID[i], 3, 2, floatChar);
+    dtostrf(data.sensor2[i], 3, 2, floatChar);
     strcat(dataBuffer, floatChar);
     strcat(dataBuffer, ",");
     Serial2.write(floatChar);
     Serial2.write(",");
   }
   for(int i = 0; i < 4; i++){
-    dtostrf(data.sensor2ID[i], 3, 2, floatChar);
+    dtostrf(data.batt[i], 3, 2, floatChar);
     strcat(dataBuffer, floatChar);
     if(i != 3){
     strcat(dataBuffer, ",");
@@ -174,5 +189,6 @@ void checkAck() {
   while (reply == 'N'){
       Serial.println("Resending Package");
       packageData();
+      reply = Serial2.read();
   } 
 }
