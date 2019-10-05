@@ -93,7 +93,7 @@ class SocketClass():
 		SECRET_KEY = bytes("dancedancedance!", 'utf8')
 		# setup connection
 		print('Connecting to server')
-		self.ipaddress = '127.0.0.1'
+		self.ipaddress = '192.168.137.75'
 		self.port = 1234
 		self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.s.connect((self.ipaddress, self.port))
@@ -110,17 +110,13 @@ class SocketClass():
 			encryptMsg = cipher.encrypt(padMessage)
 			encodedMsg = base64.b64encode(iv + encryptMsg)
 
-			time.sleep(3)
+			time.sleep(5)
 			self.s.send(encodedMsg)
 
 		self.s.close()
 
 class DataReceiveClass(Thread):
 	#global dataQueue
-	global voltage
-	global current
-	global power
-	global cumPower
 
 	def __init__(self, ser):
 		Thread.__init__(self)
@@ -130,14 +126,24 @@ class DataReceiveClass(Thread):
 		self.readData()
 
 	def readData(self):
+		global voltage
+		global current
+		global power
+		global cumPower
+
 		packet = self.ser.readline().decode()
 		packet = packet.strip()
-		print(packet)
 
-		checksum = packet.rsplit(",", 1)[1]
+		checkSum = packet.rsplit(",", 1)[1]
 		packet = packet.rsplit(",", 1)[0]
 
-		if(len(packet) != int(checksum)):
+		checkList = bytearray(packet.encode())
+		testSum = 0
+
+		for x in range(len(packet)):
+			testSum ^= checkList[x]
+
+		if(testSum != int(checkSum)):
 			self.ser.write(NACK)
 		else:
 			self.ser.write(ACK)
@@ -158,11 +164,11 @@ class DataReceiveClass(Thread):
 					else:
 						val = float(packet.split(',', 18)[x])
 						dataList.append(val)
-				print(dataList)
-				print(voltage)
-				print(current)
-				print(power)
-				print(cumPower)
+#				print(dataList)
+#				print(voltage)
+#				print(current)
+#				print(power)
+#				print(cumPower)
 				filewriter.writerow(dataList)
 		Timer(0.03, self.readData).start()
 
@@ -178,3 +184,5 @@ if __name__ == '__main__':
 
 	serThread.start()
 	socketThread.start()
+piClient.py
+Displaying piClient.py.
