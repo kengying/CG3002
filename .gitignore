@@ -1,2 +1,4 @@
 
 *.csv
+Comms/RPi/package-lock.json
+Comms/RPi/__pycache__/server_auth.cpython-37.pyc
