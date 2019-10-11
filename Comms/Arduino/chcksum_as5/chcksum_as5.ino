@@ -82,7 +82,7 @@ void setup() {
   Serial1.begin(115200);
   Serial.println("SET UP");
   
-  startHandshake();
+  //startHandshake();
   
   xSemaphore = xSemaphoreCreateBinary();
   if ( ( xSemaphore ) != NULL ) {
@@ -111,7 +111,6 @@ void startHandshake() {
     reply = Serial1.read();
     if (reply == 'A') {
       Serial.println("Handshake complete");
-      delay(500);
       handshake = true;
     }
   }
@@ -156,6 +155,7 @@ SensorData getDataFromMPU(const int MPU, SensorData datain) {
   datain.gZ = Wire.read() << 8 | Wire.read(); // 0x47 (GYRO_ZOUT_H) & 0x48 (GYRO_ZOUT_L)
 
   datain = translateValues(datain);
+
   
   return datain;
 }
@@ -177,6 +177,7 @@ SensorData translateValues(SensorData dataTranslate) {
  *  Read Value
  */
 void sensorValues() {
+  for(int i = 1; i <= 5; i++){
     Serial.println("Read Sensor 1 Run");
       MPU1Data = getDataFromMPU(MPU1, MPU1Data);
       /** 
@@ -221,6 +222,7 @@ void sensorValues() {
   Serial.print(MPU2Data.gY); Serial.print(",");  Serial.print(MPU2Data.gZ);
 
   Serial.println();
+  }
       
 }
 
@@ -246,6 +248,7 @@ void packageData() {
   memset(dataBuffer, 0, sizeof(dataBuffer));
   char floatChar[0];
   
+  for(int i =1;i <= 5; i++){
   dtostrf(data.sensor1ID, 0, 0, floatChar);
   strcat(dataBuffer, floatChar);
   strcat(dataBuffer, ",");
@@ -279,6 +282,7 @@ void packageData() {
     //}
     Serial1.write(floatChar);
     Serial1.write(",");
+  }
   }
   //Append the checksum
   int counter = strlen(dataBuffer);
