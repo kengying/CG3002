@@ -33,8 +33,8 @@ from sklearn.metrics import recall_score
 from sklearn.metrics import f1_score
 from sklearn.metrics import confusion_matrix
 
-print(tf.version.VERSION)
-print(tf.keras.__version__)
+# print(tf.version.VERSION)
+# print(tf.keras.__version__)
 
 # tf.logging.set_verbosity(tf.logging.ERROR)
 # %matplotlib inline
@@ -86,7 +86,7 @@ def load_dataset(prefix=''):
     print(trainX.shape, trainy.shape, testX.shape, testy.shape)
     return trainX, trainy, testX, testy
 
-x_train, y_train, x_test, y_test = load_dataset()
+# x_train, y_train, x_test, y_test = load_dataset()
 
 # Helper functions
 
@@ -160,12 +160,6 @@ def create_model(x_train, y_train):
     
     return model
 
-# Configure model callbacks including early stopping routine
-PATIENCE_NUM = 10
-
-early_stopping = EarlyStopping(monitor='val_loss', mode='min', verbose=0, patience=PATIENCE_NUM)
-model_checkpoint = ModelCheckpoint('best_model.h5', monitor='val_acc', mode='max', verbose=0, save_best_only=True)
-
 def evaluate_model(x_train, y_train, x_test, y_test, cnn_model):
     EPOCHS = 100
     BATCH_SIZE = 32
@@ -176,6 +170,12 @@ def evaluate_model(x_train, y_train, x_test, y_test, cnn_model):
     x_train_2, x_valid, y_train_2, y_valid = train_test_split(x_train, y_train, stratify=y_train, 
                                                               test_size=0.33, shuffle= True)
     
+    # Configure model callbacks including early stopping routine
+	PATIENCE_NUM = 10
+
+	early_stopping = EarlyStopping(monitor='val_loss', mode='min', verbose=0, patience=PATIENCE_NUM)
+	model_checkpoint = ModelCheckpoint('best_model.h5', monitor='val_acc', mode='max', verbose=0, save_best_only=True)
+
     # Fit network
 #     model.fit(x_train, y_train, validation_split=0.2, epochs=epochs, batch_size=batch_size, verbose=1)
     history = model.fit(x_train_2, y_train_2, validation_data=(x_valid, y_valid), epochs=epochs, batch_size=batch_size,
@@ -214,7 +214,7 @@ def evaluate_model(x_train, y_train, x_test, y_test, cnn_model):
 
 # 6. Evaluate the model
 
-create_model(x_train, y_train).summary()
+# create_model(x_train, y_train).summary()
 
 # Summarize scores
 def summarize_results(scores):
@@ -222,16 +222,20 @@ def summarize_results(scores):
     m, s = np.mean(scores), np.std(scores)
     print('Accuracy: %.3f%% (+/-%.3f)' % (m, s))
 
-REPEATS_NUM = 1
+# Main function
+def cnn_main():
+	x_train, y_train, x_test, y_test = load_dataset()
 
-# Repeat experiment
-scores = list()
-for r in range(REPEATS_NUM):
-    cnn_model = create_model(x_train, y_train)
-    score = evaluate_model(x_train, y_train, x_test, y_test, cnn_model)
-    score = score * 100.0
-    print('>#%d: %.3f' % (r+1, score))
-    scores.append(score)
+	REPEATS_NUM = 1
 
-# Summarize results
-summarize_results(scores)
+	# Repeat experiment
+	scores = list()
+	for r in range(REPEATS_NUM):
+	    cnn_model = create_model(x_train, y_train)
+	    score = evaluate_model(x_train, y_train, x_test, y_test, cnn_model)
+	    score = score * 100.0
+	    print('>#%d: %.3f' % (r+1, score))
+	    scores.append(score)
+
+	# Summarize results
+	summarize_results(scores)
