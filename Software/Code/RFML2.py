@@ -54,41 +54,6 @@ def get_autocorr_values(y_values, T, N, f_s):
     X_values = np.array([T*jj for jj in range(0,N)])
     return X_values, autocorr_values
 
-url= "/UCI HAR Dataset/train/Inertial Signals/"
-urltest = "/UCI HAR Dataset/test/Inertial Signals/"
-
-url_y_train = "/UCI HAR Dataset/train/y_train.txt"
-url_y_test = "/UCI HAR Dataset/test/y_test.txt"
-
-files_train = ['body_acc_x_train.txt', 'body_acc_y_train.txt', 'body_acc_z_train.txt',
-               'body_gyro_x_train.txt', 'body_gyro_y_train.txt', 'body_gyro_z_train.txt',
-               'total_acc_x_train.txt', 'total_acc_y_train.txt', 'total_acc_z_train.txt']
-
-files_test =  ['body_acc_x_test.txt', 'body_acc_y_test.txt', 'body_acc_z_test.txt',
-               'body_gyro_x_test.txt', 'body_gyro_y_test.txt', 'body_gyro_z_test.txt',
-               'total_acc_x_test.txt', 'total_acc_y_test.txt', 'total_acc_z_test.txt']
-
-train_signals, test_signals = [],[]
-
-for input_file in files_train:
-    signal = read_signals(url + input_file)
-    train_signals.append(signal)
-train_signals = np.transpose(np.array(train_signals),(1,2,0))
-
-for input_file in files_test:
-    signal = read_signals(urltest + input_file)
-    test_signals.append(signal)
-test_signals = np.transpose(np.array(test_signals),(1,2,0))
-
-label_train = read_labels(url_y_train)
-label_test = read_labels(url_y_test)
-
-#constants used to record signals
-N = 128
-f_s = 50
-t_n = 2.56
-T = t_n/N
-
 def get_first_n_peaks(x,y,num_peaks = 5):
     xt,yt=list(x),list(y)
     if len(xt) >=num_peaks:
@@ -122,24 +87,60 @@ def extract_features_labels(df,labels, T,N,f_s,denom):
         list_of_features.append(features)
     return np.array(list_of_features), np.array(list_of_labels)
 
-denom = 10
-X_train, y_train = extract_features_labels(train_signals, label_train, T,N,f_s,denom)
-X_test, y_test = extract_features_labels(test_signals, label_test, T,N,f_s,denom)
+def main():
+    url= "/UCI HAR Dataset/train/Inertial Signals/"
+    urltest = "/UCI HAR Dataset/test/Inertial Signals/"
 
-##X_train = preprocessing.normalize(X_train)
-##X_test = preprocessing.normalize(X_test)
-##
-##X_train = preprocessing.scale(X_train)
-##X_test = preprocessing.scale(X_test)
+    url_y_train = "/UCI HAR Dataset/train/y_train.txt"
+    url_y_test = "/UCI HAR Dataset/test/y_test.txt"
 
-clf= RandomForestClassifier(n_estimators = 100)
-clf.fit(X_train,y_train)
+    files_train = ['body_acc_x_train.txt', 'body_acc_y_train.txt', 'body_acc_z_train.txt',
+                   'body_gyro_x_train.txt', 'body_gyro_y_train.txt', 'body_gyro_z_train.txt',
+                   'total_acc_x_train.txt', 'total_acc_y_train.txt', 'total_acc_z_train.txt']
 
-print("Train score: {}".format(clf.score(X_train,y_train)))
-print("10-Fold CV Score: {}".format(np.mean(cross_val_score(clf,X_train,y_train,cv=10))))
-y_pred = clf.predict(X_test)
+    files_test =  ['body_acc_x_test.txt', 'body_acc_y_test.txt', 'body_acc_z_test.txt',
+                   'body_gyro_x_test.txt', 'body_gyro_y_test.txt', 'body_gyro_z_test.txt',
+                   'total_acc_x_test.txt', 'total_acc_y_test.txt', 'total_acc_z_test.txt']
 
-print("Test score: {}".format(clf.score(X_test,y_test)))
+    train_signals, test_signals = [],[]
 
-print(classification_report(y_test,y_pred))
-print(confusion_matrix(y_test,y_pred))
+    for input_file in files_train:
+        signal = read_signals(url + input_file)
+        train_signals.append(signal)
+    train_signals = np.transpose(np.array(train_signals),(1,2,0))
+
+    for input_file in files_test:
+        signal = read_signals(urltest + input_file)
+        test_signals.append(signal)
+    test_signals = np.transpose(np.array(test_signals),(1,2,0))
+
+    label_train = read_labels(url_y_train)
+    label_test = read_labels(url_y_test)
+
+    #constants used to record signals
+    N = 128
+    f_s = 50
+    t_n = 2.56
+    T = t_n/N
+
+    denom = 10
+    X_train, y_train = extract_features_labels(train_signals, label_train, T,N,f_s,denom)
+    X_test, y_test = extract_features_labels(test_signals, label_test, T,N,f_s,denom)
+
+    ##X_train = preprocessing.normalize(X_train)
+    ##X_test = preprocessing.normalize(X_test)
+    ##
+    ##X_train = preprocessing.scale(X_train)
+    ##X_test = preprocessing.scale(X_test)
+
+    clf= RandomForestClassifier(n_estimators = 100)
+    clf.fit(X_train,y_train)
+
+    print("Train score: {}".format(clf.score(X_train,y_train)))
+    print("10-Fold CV Score: {}".format(np.mean(cross_val_score(clf,X_train,y_train,cv=10))))
+    y_pred = clf.predict(X_test)
+
+    print("Test score: {}".format(clf.score(X_test,y_test)))
+
+    print(classification_report(y_test,y_pred))
+    print(confusion_matrix(y_test,y_pred))
