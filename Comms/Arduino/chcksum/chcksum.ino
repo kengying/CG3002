@@ -4,10 +4,35 @@
 
 #include <Wire.h>
 
+// ACC
 const int MPU1 = 0x68, MPU2 = 0x69; // MPU6050 I2C addresses
 const int SEL_2G_200D = 0x0, SEL_4G_500D = 0x8, SEL_8G_1000D = 0x10, SEL_16G_2000D = 0x18;
 const float CONV_2G = 16384.0, CONV_4G = 8192.0, CONV_8G = 4096.0, CONV_16G = 2048.0;
 const float CONV_200D = 131.0, CONV_500D = 65.5, CONV_1000D = 32.8, CONV_2000D = 16.4;
+
+// Power
+
+const int LOOPDELAY = 500;          // Delay for programme loop in ms
+
+const float RS_FAT = 0.10;          // Shunt, RS resistor value (in ohms)
+const float RL_INTERNAL = 10.0;     // RL value (in kilo??? ohms)
+
+const float VCC = 5.0;              // Reference voltage for analog read
+const int I_PIN = A0;               // Input pin for measuring Vout
+const int V_DIVIDER_PIN = A1;       // Input pin for measuring 50% of V
+
+float analogCurrent;
+float analogVoltageDivider;
+
+unsigned long startTime;
+unsigned long previousTime;
+unsigned long currentTime;
+
+float current = 0.00;
+float voltage = 0.00;
+
+float totalEnergy = 0.00;
+float power = 0.00;
 
 // Create Sempaphore
 SemaphoreHandle_t xSemaphore;
@@ -77,6 +102,12 @@ void setup() {
   Wire.write(0x1C);             // Access Accelerometer Scale Register
   Wire.write(SEL_4G_500D);      // Set Scale to +-4g
   Wire.endTransmission(true);   // Communication done
+
+  // Power
+  startTime = currentTime = previousTime = millis();
+
+  pinMode(I_PIN, INPUT);
+  pinMode(V_DIVIDER_PIN, INPUT);
   
   Serial.begin(115200);
   Serial1.begin(115200);
@@ -224,6 +255,42 @@ void sensorValues() {
       
 }
 
+// Voltage-Current-Power-Energy
+void getVIPE() {
+
+  // Read & Compute Current
+  analogCurrent = analogRead(A0);
+  current = (( analogCurrent * VCC / 1023)) / ( RS_FAT * RL_INTERNAL );
+
+  // Read & Compute Voltage
+  analogVoltageDivider = analogRead(A1);
+  voltage = 2.0 * (analogVoltageDivider * VCC ) / 1023;
+
+  //Calculate energy and power
+  unsigned long timeElapsedSinceLastCycle = (currentTime - previousTime) / 3600000);  // in hour.
+  unsigned long timeElapsedSinceStart = (currentTime - startTime) / 3600000);
+
+  totalEnergy = totalEnergy + (voltage * current * timeElapsedSinceLastCycle); //in Wh
+  power = totalEnergy / timeElapsedSinceStart ; //in W
+  
+  previousTime = currentTime;
+}
+
+void printVIPE() {
+  Serial.print("--- ");
+  Serial.print(currentTime);
+  Serial.print("ms ---");
+  Serial.println();
+  Serial.print(current, 3);
+  Serial.print(" A | ");
+  Serial.print(voltage, 3);
+  Serial.println(" V");
+  Serial.print(totalEnergy, 5);
+  Serial.print(" Wh || ");
+  Serial.print(power, 5);
+  Serial.println(" W");
+}
+
 void battValues() {
   /** 
        * Batt Values
@@ -233,11 +300,15 @@ void battValues() {
        * batt[3]: cumpower
        * TBD: calculation for cumpower
   */
+
+  currentTime = millis();
+  getVIPE();
+  printVIPE();
   Serial.println("Reading batt");
-  data.batt[0] = 1.1;
-  data.batt[1] = 2.1;
-  data.batt[2] = 3.11;
-  data.batt[3] = 4.1;
+  data.batt[0] = voltage;
+  data.batt[1] = current;
+  data.batt[2] = power;
+  data.batt[3] = totalEnergy;
 }
 
 void packageData() {
