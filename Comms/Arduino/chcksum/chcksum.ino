@@ -82,7 +82,7 @@ void setup() {
   Serial1.begin(115200);
   Serial.println("SET UP");
   
-  startHandshake();
+ startHandshake();
   
   xSemaphore = xSemaphoreCreateBinary();
   if ( ( xSemaphore ) != NULL ) {
@@ -130,7 +130,7 @@ void initRun(void *p){
     sensorValues();
     battValues();  
     packageData();
-    checkAck();
+   // checkAck();
     
     Serial.println();
     // 30 ms interval, ~30 samples/s
@@ -303,20 +303,4 @@ void packageData() {
   Serial1.write("\n");
   Serial.print(dataBuffer);
   Serial.println(checksum_c);
-  if(resendingPckage == true)
-    checkAck();
-}
-
-void checkAck() {
-  Serial.println("Check ACK");
-  reply = Serial1.read();
-  while (reply == 'N'){
-      Serial.println("Resending Package");
-      packageData();
-      reply = Serial1.read();
-      resendingPckage = true;
-  } 
-  if (reply == 'A'){
-    resendingPckage = false;
-  }
 }
