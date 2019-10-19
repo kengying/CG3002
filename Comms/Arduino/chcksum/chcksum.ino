@@ -12,8 +12,6 @@ const float CONV_200D = 131.0, CONV_500D = 65.5, CONV_1000D = 32.8, CONV_2000D =
 
 // Power
 
-const int LOOPDELAY = 500;          // Delay for programme loop in ms
-
 const float RS_FAT = 0.10;          // Shunt, RS resistor value (in ohms)
 const float RL_INTERNAL = 10.0;     // RL value (in kilo??? ohms)
 
@@ -129,11 +127,11 @@ void loop() {
 
 void startHandshake() {
   while (!recieved) {
-    Serial.println("start handshake");
+   // Serial.println("start handshake");
     reply = Serial1.read();
     if (reply == 'H' ){
       Serial1.write('A');
-      Serial.println("Ack Handshake");
+     // Serial.println("Ack Handshake");
       recieved = true;
       reply = 0;
     } 
@@ -165,12 +163,12 @@ void initRun(void *p){
     
     Serial.println();
     // 30 ms interval, ~30 samples/s
-    vTaskDelayUntil(&xCurrWakeTime, 30/portTICK_PERIOD_MS);
+    vTaskDelayUntil(&xCurrWakeTime, 1000/portTICK_PERIOD_MS);
   }
 }
 
 SensorData getDataFromMPU(const int MPU, SensorData datain) {
-    Serial.println("Get Data From MPU Run");
+ //   Serial.println("Get Data From MPU Run");
 
   Wire.beginTransmission(MPU);      // Begin communication
   Wire.write(0x3B);                 // Register 0x3B (ACCEL_XOUT_H) 
@@ -192,7 +190,7 @@ SensorData getDataFromMPU(const int MPU, SensorData datain) {
 }
 
 SensorData translateValues(SensorData dataTranslate) {
-  Serial.println("Translate Run");
+ // Serial.println("Translate Run");
   dataTranslate.accX = dataTranslate.accX/CONV_4G;
   dataTranslate.accY = dataTranslate.accY/CONV_4G;
   dataTranslate.accZ = dataTranslate.accZ/CONV_4G;
@@ -208,7 +206,7 @@ SensorData translateValues(SensorData dataTranslate) {
  *  Read Value
  */
 void sensorValues() {
-    Serial.println("Read Sensor 1 Run");
+   // Serial.println("Read Sensor 1 Run");
       MPU1Data = getDataFromMPU(MPU1, MPU1Data);
       /** 
        * Hand Values 
@@ -225,7 +223,7 @@ void sensorValues() {
       data.sensor1[4] = MPU1Data.gY;
       data.sensor1[5] = MPU1Data.gZ;
       
-        Serial.println("Read Sensor 2 Run");
+    //    Serial.println("Read Sensor 2 Run");
 
       MPU2Data = getDataFromMPU(MPU2, MPU2Data);
       /** 
@@ -242,16 +240,16 @@ void sensorValues() {
       data.sensor2[3] = MPU2Data.gX;
       data.sensor2[4] = MPU2Data.gY;
       data.sensor2[5] = MPU2Data.gZ;
-
-      Serial.print(MPU1Data.accX); Serial.print(","); Serial.print(MPU1Data.accY); Serial.print(","); 
-  Serial.print(MPU1Data.accZ); Serial.print(","); Serial.print(MPU1Data.gX); Serial.print(",");
-  Serial.print(MPU1Data.gY); Serial.print(",");  Serial.print(MPU1Data.gZ); Serial.print(",");
-
-      Serial.print(MPU2Data.accX); Serial.print(","); Serial.print(MPU2Data.accY); Serial.print(","); 
-  Serial.print(MPU2Data.accZ); Serial.print(","); Serial.print(MPU2Data.gX); Serial.print(",");
-  Serial.print(MPU2Data.gY); Serial.print(",");  Serial.print(MPU2Data.gZ);
-
-  Serial.println();
+//
+//      Serial.print(MPU1Data.accX); Serial.print(","); Serial.print(MPU1Data.accY); Serial.print(","); 
+//  Serial.print(MPU1Data.accZ); Serial.print(","); Serial.print(MPU1Data.gX); Serial.print(",");
+//  Serial.print(MPU1Data.gY); Serial.print(",");  Serial.print(MPU1Data.gZ); Serial.print(",");
+//
+//      Serial.print(MPU2Data.accX); Serial.print(","); Serial.print(MPU2Data.accY); Serial.print(","); 
+//  Serial.print(MPU2Data.accZ); Serial.print(","); Serial.print(MPU2Data.gX); Serial.print(",");
+//  Serial.print(MPU2Data.gY); Serial.print(",");  Serial.print(MPU2Data.gZ);
+//
+//  Serial.println();
       
 }
 
@@ -267,8 +265,8 @@ void getVIPE() {
   voltage = 2.0 * (analogVoltageDivider * VCC ) / 1023;
 
   //Calculate energy and power
-  unsigned long timeElapsedSinceLastCycle = (currentTime - previousTime) / 3600000);  // in hour.
-  unsigned long timeElapsedSinceStart = (currentTime - startTime) / 3600000);
+  unsigned long timeElapsedSinceLastCycle = (currentTime - previousTime) / 3600000;  // in hour.
+  unsigned long timeElapsedSinceStart = (currentTime - startTime) / 3600000;
 
   totalEnergy = totalEnergy + (voltage * current * timeElapsedSinceLastCycle); //in Wh
   power = totalEnergy / timeElapsedSinceStart ; //in W
@@ -277,18 +275,18 @@ void getVIPE() {
 }
 
 void printVIPE() {
-  Serial.print("--- ");
-  Serial.print(currentTime);
-  Serial.print("ms ---");
-  Serial.println();
-  Serial.print(current, 3);
-  Serial.print(" A | ");
-  Serial.print(voltage, 3);
-  Serial.println(" V");
-  Serial.print(totalEnergy, 5);
-  Serial.print(" Wh || ");
-  Serial.print(power, 5);
-  Serial.println(" W");
+//  Serial.print("--- ");
+//  Serial.print(currentTime);
+//  Serial.print("ms ---");
+//  Serial.println();
+//  Serial.print(current, 3);
+//  Serial.print(" A | ");
+//  Serial.print(voltage, 3);
+//  Serial.println(" V");
+//  Serial.print(totalEnergy, 5);
+//  Serial.print(" Wh || ");
+//  Serial.print(power, 5);
+//  Serial.println(" W");
 }
 
 void battValues() {
@@ -303,8 +301,8 @@ void battValues() {
 
   currentTime = millis();
   getVIPE();
-  printVIPE();
-  Serial.println("Reading batt");
+ // printVIPE();
+ // Serial.println("Reading batt");
   data.batt[0] = voltage;
   data.batt[1] = current;
   data.batt[2] = power;
