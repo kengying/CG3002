@@ -6,6 +6,9 @@ import time
 import csv
 import random
 
+from cnn import cnn_main
+from RFML import RFML_main
+
 #from Crypto.Util.Padding import pad
 from Crypto import Random
 from Crypto.Cipher import AES
@@ -147,7 +150,7 @@ class DataReceiveClass(Thread):
 			self.ser.write(NACK)
 		else:
 			self.ser.write(ACK)
-			with open('/home/pi/Desktop/data.csv', 'a') as csvfile:
+			with open('/home/pi/Desktop/dance move/data.csv', 'a') as csvfile:
 				filewriter = csv.writer(csvfile, delimiter=',', quoting=csv.QUOTE_NONE)
 				dataList = []
 				for x in range (0, 18):
@@ -184,5 +187,3 @@ if __name__ == '__main__':
 
 	serThread.start()
 	socketThread.start()
-piClient.py
-Displaying piClient.py.
