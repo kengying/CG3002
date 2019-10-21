@@ -163,7 +163,7 @@ void initRun(void *p){
     
     Serial.println();
     // 30 ms interval, ~30 samples/s
-    vTaskDelayUntil(&xCurrWakeTime, 1000/portTICK_PERIOD_MS);
+    vTaskDelayUntil(&xCurrWakeTime, 50/portTICK_PERIOD_MS);
   }
 }
 
@@ -255,8 +255,7 @@ void sensorValues() {
 
 // Voltage-Current-Power-Energy
 void getVIPE() {
-
-  // Read & Compute Current
+// Read & Compute Current
   analogCurrent = analogRead(A0);
   current = (( analogCurrent * VCC / 1023)) / ( RS_FAT * RL_INTERNAL );
 
@@ -265,28 +264,28 @@ void getVIPE() {
   voltage = 2.0 * (analogVoltageDivider * VCC ) / 1023;
 
   //Calculate energy and power
-  unsigned long timeElapsedSinceLastCycle = (currentTime - previousTime) / 3600000;  // in hour.
-  unsigned long timeElapsedSinceStart = (currentTime - startTime) / 3600000;
+  unsigned long timeElapsedSinceLastCycle = (currentTime - previousTime);  // in ms.
+  unsigned long timeElapsedSinceStart = (currentTime - startTime);
 
-  totalEnergy = totalEnergy + (voltage * current * timeElapsedSinceLastCycle); //in Wh
-  power = totalEnergy / timeElapsedSinceStart ; //in W
+  totalEnergy = totalEnergy + (voltage * current * (timeElapsedSinceLastCycle / 3600000.0)); //in Wh
+  power = totalEnergy / (timeElapsedSinceStart/3600000.0) ; //in W
   
   previousTime = currentTime;
-}
+  }
 
 void printVIPE() {
-//  Serial.print("--- ");
-//  Serial.print(currentTime);
-//  Serial.print("ms ---");
-//  Serial.println();
-//  Serial.print(current, 3);
-//  Serial.print(" A | ");
-//  Serial.print(voltage, 3);
-//  Serial.println(" V");
-//  Serial.print(totalEnergy, 5);
-//  Serial.print(" Wh || ");
-//  Serial.print(power, 5);
-//  Serial.println(" W");
+  Serial.print("--- ");
+  Serial.print(currentTime);
+  Serial.print("ms ---");
+  Serial.println();
+  Serial.print(current, 3);
+  Serial.print(" A | ");
+  Serial.print(voltage, 3);
+  Serial.println(" V");
+  Serial.print(totalEnergy, 5);
+  Serial.print(" Wh || ");
+  Serial.print(power, 5);
+  Serial.println(" W");
 }
 
 void battValues() {
@@ -301,7 +300,7 @@ void battValues() {
 
   currentTime = millis();
   getVIPE();
- // printVIPE();
+  //printVIPE();
  // Serial.println("Reading batt");
   data.batt[0] = voltage;
   data.batt[1] = current;

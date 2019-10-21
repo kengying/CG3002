@@ -53,8 +53,8 @@ void getVIPE() {
   voltage = 2.0 * (analogVoltageDivider * VCC ) / 1023;
 
   //Calculate energy and power
-  unsigned long timeElapsedSinceLastCycle = (currentTime - previousTime) / 3600000;  // in hour.
-  unsigned long timeElapsedSinceStart = (currentTime - startTime) / 3600000;
+  unsigned long timeElapsedSinceLastCycle = (currentTime - previousTime) / 3600000.0;  // in hour.
+  unsigned long timeElapsedSinceStart = (currentTime - startTime) / 3600000.0;
 
   totalEnergy = totalEnergy + (voltage * current * timeElapsedSinceLastCycle); //in Wh
   power = totalEnergy / timeElapsedSinceStart ; //in W
