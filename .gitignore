@@ -1,4 +1,5 @@
 
-*.csv
 Comms/RPi/package-lock.json
+Comms/RPi/log6.csv
+Comms/RPi/log1.csv
 Comms/RPi/__pycache__/server_auth.cpython-37.pyc
