@@ -109,7 +109,7 @@ void setup() {
   
   Serial.begin(115200);
   Serial1.begin(115200);
-  Serial.println("SET UP");
+//  Serial.println("SET UP");
   
  startHandshake();
   
@@ -118,7 +118,7 @@ void setup() {
     xSemaphoreGive( (xSemaphore) );
   }
   
-  Serial.println("CREATE TASK");
+//  Serial.println("CREATE TASK");
   xTaskCreate(initRun, "initRun", 200, NULL, 2, NULL);
 }
 
@@ -139,7 +139,7 @@ void startHandshake() {
   while (recieved  && !handshake) {
     reply = Serial1.read();
     if (reply == 'A') {
-      Serial.println("Handshake complete");
+ //     Serial.println("Handshake complete");
       delay(500);
       handshake = true;
     }
@@ -161,9 +161,9 @@ void initRun(void *p){
     packageData();
    // checkAck();
     
-    Serial.println();
+//    Serial.println();
     // 30 ms interval, ~30 samples/s
-    vTaskDelayUntil(&xCurrWakeTime, 50/portTICK_PERIOD_MS);
+    vTaskDelayUntil(&xCurrWakeTime, 30/portTICK_PERIOD_MS);
   }
 }
 
@@ -369,6 +369,6 @@ void packageData() {
   itoa(checksum2, checksum_c, 10);
   Serial1.write(checksum_c);
   Serial1.write("\n");
-  Serial.print(dataBuffer);
-  Serial.println(checksum_c);
+//  Serial.print(dataBuffer);
+//  Serial.println(checksum_c);
 }
