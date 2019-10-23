@@ -22,15 +22,17 @@ const int V_DIVIDER_PIN = A1;       // Input pin for measuring 50% of V
 float analogCurrent;
 float analogVoltageDivider;
 
-unsigned long startTime;
-unsigned long previousTime;
-unsigned long currentTime;
+unsigned long startTime = 0;
+unsigned long previousTime = 0;
+unsigned long currentTime = 0;
 
 float current = 0.00;
 float voltage = 0.00;
 
 float totalEnergy = 0.00;
 float power = 0.00;
+
+
 
 // Create Sempaphore
 SemaphoreHandle_t xSemaphore;
@@ -140,7 +142,7 @@ void startHandshake() {
     reply = Serial1.read();
     if (reply == 'A') {
  //     Serial.println("Handshake complete");
-      delay(500);
+      //delay(500);
       handshake = true;
     }
   }
@@ -163,7 +165,7 @@ void initRun(void *p){
     
 //    Serial.println();
     // 30 ms interval, ~30 samples/s
-    vTaskDelayUntil(&xCurrWakeTime, 30/portTICK_PERIOD_MS);
+    vTaskDelayUntil(&xCurrWakeTime, 20/portTICK_PERIOD_MS);
   }
 }
 
@@ -309,7 +311,7 @@ void battValues() {
 }
 
 void packageData() {
-  Serial.println("Packing and Send Data");
+//  Serial.println("Packing and Send Data");
   //Clear the dataBuffer
   memset(dataBuffer, 0, sizeof(dataBuffer));
   char floatChar[0];
