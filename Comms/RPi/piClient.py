@@ -6,8 +6,8 @@ import time
 import csv
 import random
 
-from cnn import cnn_main
-from RFML import RFML_main
+#from RFML2 import RFMLmain
+#from cnn import cnn_main
 
 #from Crypto.Util.Padding import pad
 from Crypto import Random
@@ -74,6 +74,8 @@ class SerClass:
 class SocketClass():
 	currMove = None
 	message = None
+	RFMLmove = None
+	slidingMove = None
 
 	def createMsg(self):
 		global voltage
@@ -90,14 +92,17 @@ class SocketClass():
 
 	def machine(self):
 		# ML code that will return an index
-		self.currMove=random.randint(0,9)
+		self.currMove=0
+		print("Running ML code")
+#		RFMLmain()
+#		cnn_main()
 
 	def run(self):
 		SECRET_KEY = bytes("dancedancedance!", 'utf8')
 		# setup connection
 		print('Connecting to server')
-		self.ipaddress = '192.168.137.75'
-		self.port = 1234
+		self.ipaddress = '192.168.137.167'
+		self.port = 8080
 		self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.s.connect((self.ipaddress, self.port))
 		print("Connected to server " +self.ipaddress+ ", port: " +str(self.port))
@@ -136,6 +141,7 @@ class DataReceiveClass(Thread):
 
 		packet = self.ser.readline().decode()
 		packet = packet.strip()
+		print(packet)
 
 		checkSum = packet.rsplit(",", 1)[1]
 		packet = packet.rsplit(",", 1)[0]
@@ -145,12 +151,16 @@ class DataReceiveClass(Thread):
 
 		for x in range(len(packet)):
 			testSum ^= checkList[x]
+#		print("values:")
+#		print(checkSum)
+#		print(testSum)
 
-		if(testSum != int(checkSum)):
+		if(testSum == int(checkSum)):
 			self.ser.write(NACK)
 		else:
+#			print("populate")
 			self.ser.write(ACK)
-			with open('/home/pi/Desktop/dance move/data.csv', 'a') as csvfile:
+			with open('/home/pi/Desktop/dataset/dataset_syed/standstill_syed.csv', 'a') as csvfile:
 				filewriter = csv.writer(csvfile, delimiter=',', quoting=csv.QUOTE_NONE)
 				dataList = []
 				for x in range (0, 18):
@@ -167,13 +177,14 @@ class DataReceiveClass(Thread):
 					else:
 						val = float(packet.split(',', 18)[x])
 						dataList.append(val)
+				dataList.append(5) # append fixed action
 #				print(dataList)
 #				print(voltage)
 #				print(current)
 #				print(power)
 #				print(cumPower)
 				filewriter.writerow(dataList)
-		Timer(0.03, self.readData).start()
+		Timer(0.001, self.readData).start()
 
 
 if __name__ == '__main__':
