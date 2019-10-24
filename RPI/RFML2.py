@@ -88,11 +88,11 @@ def extract_features_labels(df,labels, T,N,f_s,denom):
     return np.array(list_of_features), np.array(list_of_labels)
 
 def RFMLmain():
-    url= "/home/pi/Desktop/UCI HAR Dataset/train/Inertial Signals/"
-    urltest = "/home/pi/Desktop/UCI HAR Dataset/test/Inertial Signals/"
+    url= "/UCI HAR Dataset/train/Inertial Signals/"
+    urltest = "/UCI HAR Dataset/test/Inertial Signals/"
 
-    url_y_train = "/home/pi/Desktop/UCI HAR Dataset/train/y_train.txt"
-    url_y_test = "/home/pi/Desktop/UCI HAR Dataset/test/y_test.txt"
+    url_y_train = "/UCI HAR Dataset/train/y_train.txt"
+    url_y_test = "/UCI HAR Dataset/test/y_test.txt"
 
     files_train = ['body_acc_x_train.txt', 'body_acc_y_train.txt', 'body_acc_z_train.txt',
                    'body_gyro_x_train.txt', 'body_gyro_y_train.txt', 'body_gyro_z_train.txt',
@@ -144,4 +144,3 @@ def RFMLmain():
 
     print(classification_report(y_test,y_pred))
     print(confusion_matrix(y_test,y_pred))
-
