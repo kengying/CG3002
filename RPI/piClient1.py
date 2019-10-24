@@ -103,7 +103,6 @@ class SocketClass():
 		# ML code that will return an index
 		self.currMove=None
 		self.continuePredict = True
-		print("Running ML code")
 		self.predictMove = [None, None, None, None, None]
 
 		while(self.continuePredict):
@@ -115,6 +114,7 @@ class SocketClass():
 			# pass array to ML only when there is length is 128
 			# reset to empty
 			if numpyArray.size > 128:
+				print("run ML")
 				self.predictMove[self.index] = RFMLmain(numpyArray)
 				#self.predictMove[self.index] = cnn_main(numpyArray)
 				numpyArray = np.array([])
