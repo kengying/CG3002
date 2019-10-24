@@ -110,7 +110,8 @@ class SocketClass():
 		while(self.continuePredict):
 			# pass array to ML only when there is length is 128
 			# reset to empty
-			if len(numpyArray) > 64:
+			if len(numpyArray) > 128:
+				#print(numpyArray)
 				print("run ML")
 				self.temp = predictMain(numpyArray)
 				#self.temp = cnn_main(numpyArray)
@@ -124,7 +125,7 @@ class SocketClass():
 					self.predictIndex[self.temp] += 1
 
 				self.count += 1
-				print(self.count)
+				#print(self.count)
 				numpyArray = np.array([])
 
 			# check prediction accuracy every 3 times
@@ -132,7 +133,7 @@ class SocketClass():
 				for x in range (0, 5):
 					if self.predictIndex[x] > 1:
 						self.currMove = x
-				print(self.currMove)
+				#print(self.currMove)
 				self.predictIndex = [0,0,0,0,0]
 				self.count = 0
 				self.continuePredict = False
@@ -217,7 +218,11 @@ class DataReceiveClass(Thread):
 				else:
 					val = float(packet.split(',', 18)[x])
 					dataList.append(val)
-			numpyArray = np.append(numpyArray, dataList)
+			#print(numpyArray)
+			if numpyArray.size == 0:
+				numpyArray = np.append(numpyArray, dataList)
+			else:
+				numpyArray = np.vstack([numpyArray, dataList])
 			#print(dataList)
 			#print("curr: ", numpyArray)
 		Timer(0.001, self.readData).start()
