@@ -20,8 +20,9 @@ class server_auth:
         decryptedTextStr = decryptedText.decode('utf8')
 #        print(decryptedTextStr)
         decryptedTextStr1 = decryptedTextStr[decryptedTextStr.find('#'):]
-        print(decryptedTextStr1)
+#        print(decryptedTextStr1)
         decryptedTextFinal = bytes(decryptedTextStr1[1:],'utf8').decode('utf8')
+        print(decryptedTextFinal)
         action = decryptedTextFinal.split('|')[0]
         voltage = decryptedTextFinal.split('|')[1]
         current = decryptedTextFinal.split('|')[2]

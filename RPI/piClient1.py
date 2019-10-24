@@ -82,7 +82,7 @@ class SocketClass():
 
 	def __init__(self, IPaddress, PORT):
 		self.ipaddress = IPaddress
-		self.port = PORT
+		self.port = int(PORT)
 
 	def createMsg(self):
 		global voltage
@@ -104,28 +104,30 @@ class SocketClass():
 		self.currMove=None
 		self.continuePredict = True
 		self.predictMove = [None, None, None, None, None]
+		self.index = 0
 
 		while(self.continuePredict):
-
-			self.index = 0
-			if self.index > 5:
+			if self.index >= 5:
 				self.index = 0
 
 			# pass array to ML only when there is length is 128
 			# reset to empty
-			if numpyArray.size > 128:
+			if len(numpyArray) > 128:
 				print("run ML")
-				self.predictMove[self.index] = RFMLmain(numpyArray)
+				#self.predictMove[self.index] = RFMLmain(numpyArray)
 				#self.predictMove[self.index] = cnn_main(numpyArray)
+				self.predictMove[self.index] = 1
+				self.index += 1
+				print(self.index)
 				numpyArray = np.array([])
 
 			# index 5 is standing still
-			if self.predictMove[self.index] == 5:
-				self.predictMove[self.index] = None
+			if self.predictMove[self.index-1] == 5:
+				self.predictMove[self.index-1] = None
 
 			if self.predictMove[0] == self.predictMove[1] == self.predictMove[2] == self.predictMove[3] == self.predictMove[4]:
 				self.currMove = self.predictMove[0]
-				self.continuePredict = false
+				self.continuePredict = False
 
 	def run(self):
 		SECRET_KEY = bytes("dancedancedance!", 'utf8')
@@ -176,7 +178,7 @@ class DataReceiveClass(Thread):
 
 		packet = self.ser.readline().decode()
 		packet = packet.strip()
-		print(packet)
+		#print(packet)
 
 		checkSum = packet.rsplit(",", 1)[1]
 		packet = packet.rsplit(",", 1)[0]
@@ -207,8 +209,9 @@ class DataReceiveClass(Thread):
 				else:
 					val = float(packet.split(',', 18)[x])
 					dataList.append(val)
-				numpyArray = np.append(numpyArray, dataList)
-				print("curr: ", numpyArray)
+			numpyArray = np.append(numpyArray, dataList)
+			#print(dataList)
+			#print("curr: ", numpyArray)
 		Timer(0.001, self.readData).start()
 
 
