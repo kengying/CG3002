@@ -58,7 +58,7 @@ def get_features(x_values,y_values, mph):
     return peaks_x+peaks_y
 
 def extract_features_labels_predict(df,T,N,f_s,denom):
-    percentile = 10
+    percentile = 5
     list_of_features=[]
     features=[]
     for signal_comp in range(0,df.shape[1]):
@@ -75,10 +75,8 @@ def extract_features_labels_predict(df,T,N,f_s,denom):
     list_of_features.append(features)
     return np.array(list_of_features)
  
-def main():
-    url = "C:/Users/Jon/Documents/CG3002/Software/bunny1_kevin.csv"
-    df = pd.read_csv(url)
-    X = df.iloc[1000:1128,0:12]
+def predictMain(X):
+    
     X = preprocessing.normalize(X)
     X = extract_features_labels_predict(X,T,N,f_s,denom)
 
