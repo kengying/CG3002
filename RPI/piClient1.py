@@ -37,7 +37,7 @@ current = 0
 power = 0
 cumPower = 0
 numpyArrayIndex = 0
-numpyArray = np.array()
+numpyArray = np.empty((1,128), dtype=object)
 
 HELLO = ('H').encode()
 ACK = ('A').encode()
@@ -75,13 +75,16 @@ class SerClass:
 		dataThread = DataReceiveClass(self.ser)
 		dataThread.start()
 
-class SocketClass(IPaddress, PORT):
+class SocketClass():
 	currMove = None
 	message = None
 	RFMLmove = None
 	slidingMove = None
 	lastMsgTime = None
 
+	def __init__(self, IPaddress, PORT):
+		self.ipaddress = IPaddress
+		self.port = PORT
 	def createMsg(self):
 		global voltage
 		global current
@@ -122,8 +125,8 @@ class SocketClass(IPaddress, PORT):
 		SECRET_KEY = bytes("dancedancedance!", 'utf8')
 		# setup connection
 		print('Connecting to server')
-		self.ipaddress = IPaddress
-		self.port = PORT
+		print(self.ipaddress)
+		print(self.port)
 		self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.s.connect((self.ipaddress, self.port))
 		print("Connected to server " +self.ipaddress+ ", port: " +str(self.port))
@@ -145,7 +148,7 @@ class SocketClass(IPaddress, PORT):
 
 				time.sleep(5)
 				self.s.send(encodedMsg)
-				
+
 			#if self.currMove == 10: (ending move)
 				#break
 		self.s.close()
@@ -221,16 +224,16 @@ if __name__ == '__main__':
 
 	if len(sys.argv) != 3:
 		print('Invalid number of arguments')
-		print('python3 piClient1.py [IP address] [Port])
+		print('python3 piClient1.py [IP address] [Port]')
 		sys.exit()
-	
+
 	SerComm = SerClass()
 	#SerComm.run()
 	serThread = Thread(target=SerComm.run)
 
-	SocketComm = SocketClass()
+	SocketComm = SocketClass(sys.argv[1], sys.argv[2])
 	#SocketComm.run()
-	socketThread = Thread(target=SocketComm.run, args=(sys.argv[1], sys.argv[2],))
+	socketThread = Thread(target=SocketComm.run)
 
 	serThread.start()
 	socketThread.start()
