@@ -81,4 +81,4 @@ def predictMain(X):
     X = extract_features_labels_predict(X,T,N,f_s,denom)
 
     clf = joblib.load("RFmodel.pkl")
-    print(clf.predict(X))
+    print(int(clf.predict(X)[0]))
