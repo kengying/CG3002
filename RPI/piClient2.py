@@ -118,7 +118,7 @@ class PiClass():
 			else:
 				self.ser.write(self.YES)
 			
-			if len(self.numpyArray) > 128
+			if len(self.numpyArray) > 127:
 				self.ser.write(self.NACK)
 				continueReceiveData = False
 
@@ -129,11 +129,6 @@ class PiClass():
 			self.message = None
 		else:
 			self.message = ("#" + actions[self.currMove] + "|" + str(format(self.voltage, '.2f')) + "|" + str(format(self.current, '.2f')) + "|" + str(format(self.power, '.2f')) + "|" + str(format(self.cumPower, '.2f')) + "|").encode('utf8').strip()
-			self.currMove = None
-
-	def machine(self):
-		self.currMove = predictMain(self.numpyArray)
-		if self.temp == 5:
 			self.currMove = None
 
 	def run(self):
@@ -150,8 +145,44 @@ class PiClass():
 		self.lastMsgTime = time.time()
 
 		while True:
-			self.readData()
-			self.machine()
+			
+			# ML code that will return an index
+			self.currMove=None
+			continuePredict = True
+			count = 0
+			predictIndex = [0,0,0,0,0]
+			
+			while(continuePredict):
+
+				self.readData()
+								
+				#print(numpyArray)
+				print("run ML")
+				temp = predictMain(numpyArray)
+				#self.temp = cnn_main(numpyArray)
+				#self.temp = 1
+				#print(self.temp)
+
+				# index 5 is standing still
+				if temp == 5:
+					continue
+				else:
+					predictIndex[temp] += 1
+
+				count += 1
+				#print(self.count)
+				self.numpyArray = np.array([])
+
+				# check prediction accuracy every 3 times
+				if count >= 3:
+					for x in range (0, 5):
+						if predictIndex[x] > 1:
+							self.currMove = x
+					#print(self.currMove)
+					predictIndex = [0,0,0,0,0]
+					count = 0
+					continuePredict = False
+			
 			self.createMsg()
 
 			# send msg at an interval of 3s
