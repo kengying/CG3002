@@ -124,16 +124,17 @@ void setup() {
   xTaskCreate(initRun, "initRun", 200, NULL, 2, NULL);
 }
 
+
 void loop() {
 }
 
 void startHandshake() {
   while (!recieved) {
-   // Serial.println("start handshake");
+    Serial.println("start handshake");
     reply = Serial1.read();
     if (reply == 'H' ){
       Serial1.write('A');
-     // Serial.println("Ack Handshake");
+      Serial.println("Ack Handshake");
       recieved = true;
       reply = 0;
     } 

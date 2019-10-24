@@ -31,12 +31,10 @@ def pad(data_to_pad, block_size, style='pkcs7'):
 	return data_to_pad + padding
 
 # global variable decleration
-#dataQueue = q.Queue()
 voltage = 0
 current = 0
 power = 0
 cumPower = 0
-numpyArrayIndex = 0
 numpyArray = np.array([])
 
 HELLO = ('H').encode()
@@ -85,6 +83,7 @@ class SocketClass():
 	def __init__(self, IPaddress, PORT):
 		self.ipaddress = IPaddress
 		self.port = PORT
+
 	def createMsg(self):
 		global voltage
 		global current
@@ -100,13 +99,12 @@ class SocketClass():
 
 	def machine(self):
 		global numpyArray
-		global numpyArrayIndex
 
 		# ML code that will return an index
 		self.currMove=None
 		self.continuePredict = True
 		print("Running ML code")
-		self.tempMove = np.array(None, None, None, None, None)
+		self.predictMove = [None, None, None, None, None]
 
 		while(self.continuePredict):
 
@@ -115,16 +113,18 @@ class SocketClass():
 				self.index = 0
 
 			# pass array to ML only when there is length is 128
+			# reset to empty
 			if numpyArray.size > 128:
-				self.tempMove[self.index] = RFMLmain(numpyArray)
-				#self.tempMove[self.index] = cnn_main(numpyArray)
+				self.predictMove[self.index] = RFMLmain(numpyArray)
+				#self.predictMove[self.index] = cnn_main(numpyArray)
 				numpyArray = np.array([])
 
-			if self.tempMove[self.index] == 5:
-				self.tempMove[self.index] = None
+			# index 5 is standing still
+			if self.predictMove[self.index] == 5:
+				self.predictMove[self.index] = None
 
-			if self.tempMove[0] == self.tempMove[1] == self.tempMove[2] == self.tempMove[3] == self.tempMove[4]:
-				self.currMove = self.tempMove
+			if self.predictMove[0] == self.predictMove[1] == self.predictMove[2] == self.predictMove[3] == self.predictMove[4]:
+				self.currMove = self.predictMove[0]
 				self.continuePredict = false
 
 	def run(self):
@@ -172,7 +172,6 @@ class DataReceiveClass(Thread):
 		global current
 		global power
 		global cumPower
-		global numpyArrayIndex
 		global numpyArray
 
 		packet = self.ser.readline().decode()
@@ -209,8 +208,7 @@ class DataReceiveClass(Thread):
 					val = float(packet.split(',', 18)[x])
 					dataList.append(val)
 				numpyArray = np.append(numpyArray, dataList)
-				numpyArrayIndex += 1
-				print("append: ", numpyArray)
+				print("curr: ", numpyArray)
 		Timer(0.001, self.readData).start()
 
 
