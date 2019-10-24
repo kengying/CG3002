@@ -372,6 +372,6 @@ void packageData() {
   itoa(checksum2, checksum_c, 10);
   Serial1.write(checksum_c);
   Serial1.write("\n");
-//  Serial.print(dataBuffer);
+  Serial.println(dataBuffer);
 //  Serial.println(checksum_c);
 }

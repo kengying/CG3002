@@ -62,7 +62,7 @@ def extract_features_labels_predict(df,T,N,f_s,denom):
     list_of_features=[]
     features=[]
     for signal_comp in range(0,df.shape[1]):
-        signal = df[:,signal_comp].reshape(-1)
+        signal = df[:,signal_comp]
 
         signal_min = np.nanpercentile(signal,percentile)
         signal_max = np.nanpercentile(signal,100-percentile)
