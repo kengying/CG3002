@@ -155,13 +155,13 @@ class PiClass():
 			while(continuePredict):
 
 				self.readData()
-								
+
 				#print(numpyArray)
 				print("run ML")
-				temp = predictMain(numpyArray)
+				temp = predictMain(self.numpyArray)
 				#self.temp = cnn_main(numpyArray)
 				#self.temp = 1
-				#print(self.temp)
+				print(temp)
 
 				# index 5 is standing still
 				if temp == 5:
