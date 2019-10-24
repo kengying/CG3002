@@ -8,7 +8,7 @@ import random
 import sys
 import numpy as np
 
-#from RFML2 import RFMLmain
+from PredictMove import predictMain
 #from cnn import cnn_main
 
 #from Crypto.Util.Padding import pad
@@ -92,7 +92,7 @@ class SocketClass():
 
 		self.actions = ['handmotor', 'bunny', 'tapshoulder', 'rocket', 'cowboy', 'hunchback', 'jamesbond', 'chicken', 'movingsalute', 'whip', 'logout']
 
-		if self.currMove == None:
+		if self.currMove == None || self.currMove == []:
 			self.message = None
 		else:
 			self.message = ("#" + self.actions[self.currMove] + "|" + str(format(voltage, '.2f')) + "|" + str(format(current, '.2f')) + "|" + str(format(power, '.2f')) + "|" + str(format(cumPower, '.2f')) + "|").encode('utf8').strip()
@@ -103,30 +103,34 @@ class SocketClass():
 		# ML code that will return an index
 		self.currMove=None
 		self.continuePredict = True
-		self.predictMove = [None, None, None, None, None]
-		self.index = 0
+		self.predictMove = [None, None, None]
+		self.count = 0
+		self.predictIndex = np.zeros(shape = (1,5))
 
 		while(self.continuePredict):
-			if self.index >= 5:
-				self.index = 0
-
 			# pass array to ML only when there is length is 128
 			# reset to empty
-			if len(numpyArray) > 128:
+			if len(numpyArray) > 64:
 				print("run ML")
-				#self.predictMove[self.index] = RFMLmain(numpyArray)
-				#self.predictMove[self.index] = cnn_main(numpyArray)
-				self.predictMove[self.index] = 1
-				self.index += 1
-				print(self.index)
+				self.temp = PredictMain(numpyArray)
+				#self.temp = cnn_main(numpyArray)
+				#self.temp = 1
+				
+				# index 5 is standing still
+				if self.temp == 5:
+					continue
+				else:
+					self.predictIndex[self.temp] += 1
+				
+				self.count += 1
+				print(self.count)
 				numpyArray = np.array([])
 
-			# index 5 is standing still
-			if self.predictMove[self.index-1] == 5:
-				self.predictMove[self.index-1] = None
-
-			if self.predictMove[0] == self.predictMove[1] == self.predictMove[2] == self.predictMove[3] == self.predictMove[4]:
-				self.currMove = self.predictMove[0]
+			# check prediction accuracy every 3 times
+			if self.index >= 3:
+				self.currMove = np.where(self.predictIndex >=2)
+				self.predictIndex = np.zeros(shape = (1,5))
+				self.count = 0
 				self.continuePredict = False
 
 	def run(self):
