@@ -82,5 +82,3 @@ def predictMain(X):
 
     clf = joblib.load("RFmodel.pkl")
     print(clf.predict(X))
-
-main()
