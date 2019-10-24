@@ -92,10 +92,11 @@ class SocketClass():
 
 		self.actions = ['handmotor', 'bunny', 'tapshoulder', 'rocket', 'cowboy', 'hunchback', 'jamesbond', 'chicken', 'movingsalute', 'whip', 'logout']
 
-		if self.currMove == None || self.currMove == []:
+		if self.currMove == None:
 			self.message = None
 		else:
 			self.message = ("#" + self.actions[self.currMove] + "|" + str(format(voltage, '.2f')) + "|" + str(format(current, '.2f')) + "|" + str(format(power, '.2f')) + "|" + str(format(cumPower, '.2f')) + "|").encode('utf8').strip()
+			self.currMove = None
 
 	def machine(self):
 		global numpyArray
@@ -105,31 +106,34 @@ class SocketClass():
 		self.continuePredict = True
 		self.predictMove = [None, None, None]
 		self.count = 0
-		self.predictIndex = np.zeros(shape = (1,5))
-
+		self.predictIndex = [0,0,0,0,0]
 		while(self.continuePredict):
 			# pass array to ML only when there is length is 128
 			# reset to empty
 			if len(numpyArray) > 64:
 				print("run ML")
-				self.temp = PredictMain(numpyArray)
+				self.temp = predictMain(numpyArray)
 				#self.temp = cnn_main(numpyArray)
 				#self.temp = 1
-				
+				print(self.temp)
+
 				# index 5 is standing still
 				if self.temp == 5:
 					continue
 				else:
 					self.predictIndex[self.temp] += 1
-				
+
 				self.count += 1
 				print(self.count)
 				numpyArray = np.array([])
 
 			# check prediction accuracy every 3 times
-			if self.index >= 3:
-				self.currMove = np.where(self.predictIndex >=2)
-				self.predictIndex = np.zeros(shape = (1,5))
+			if self.count >= 3:
+				for x in range (0, 5):
+					if self.predictIndex[x] > 1:
+						self.currMove = x
+				print(self.currMove)
+				self.predictIndex = [0,0,0,0,0]
 				self.count = 0
 				self.continuePredict = False
 
