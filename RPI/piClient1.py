@@ -5,7 +5,7 @@ from threading import Timer,Thread,Event
 import time
 import csv
 import random
-
+import sys
 import numpy as np
 
 #from RFML2 import RFMLmain
@@ -37,7 +37,7 @@ current = 0
 power = 0
 cumPower = 0
 numpyArrayIndex = 0
-numpyArray = np.empty((1,128), dtype=object)
+numpyArray = np.array([])
 
 HELLO = ('H').encode()
 ACK = ('A').encode()
@@ -99,6 +99,9 @@ class SocketClass():
 			self.message = ("#" + self.actions[self.currMove] + "|" + str(format(voltage, '.2f')) + "|" + str(format(current, '.2f')) + "|" + str(format(power, '.2f')) + "|" + str(format(cumPower, '.2f')) + "|").encode('utf8').strip()
 
 	def machine(self):
+		global numpyArray
+		global numpyArrayIndex
+
 		# ML code that will return an index
 		self.currMove=None
 		self.continuePredict = True
@@ -111,8 +114,11 @@ class SocketClass():
 			if self.index > 5:
 				self.index = 0
 
-			self.tempMove[self.index] = RFMLmain(numpyArray)
-			#self.tempMove[self.index] = cnn_main(numpyArray)
+			# pass array to ML only when there is length is 128
+			if numpyArray.size > 128:
+				self.tempMove[self.index] = RFMLmain(numpyArray)
+				#self.tempMove[self.index] = cnn_main(numpyArray)
+				numpyArray = np.array([])
 
 			if self.tempMove[self.index] == 5:
 				self.tempMove[self.index] = None
@@ -125,8 +131,6 @@ class SocketClass():
 		SECRET_KEY = bytes("dancedancedance!", 'utf8')
 		# setup connection
 		print('Connecting to server')
-		print(self.ipaddress)
-		print(self.port)
 		self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.s.connect((self.ipaddress, self.port))
 		print("Connected to server " +self.ipaddress+ ", port: " +str(self.port))
@@ -188,35 +192,25 @@ class DataReceiveClass(Thread):
 			self.ser.write(NACK)
 		else:
 			self.ser.write(ACK)
-			if numpyArrayIndex > 128:
-				numpyArray = np.delete(numpyArray)
-				numpyArrayIndex = 0
-				print("delete: " + numpyArray)
-			else:
-				dataList = []
-				for x in range (0, 18):
-					if x==0 or x==7:
-						continue
-					elif x==14:
-						voltage = float(packet.split(',', 18)[x])
-					elif x==15:
-						current = float(packet.split(',', 18)[x])
-					elif x==16:
-						power = float(packet.split(',', 18)[x])
-					elif x==17:
-						cumPower = float(packet.split(',', 18)[x])
-					else:
-						val = float(packet.split(',', 18)[x])
-						dataList.append(val)
-				dataList.append(5) # append fixed action
-#				print(dataList)
-#				print(voltage)
-#				print(current)
-#				print(power)
-#				print(cumPower)
+
+			dataList = []
+			for x in range (0, 18):
+				if x==0 or x==7:
+					continue
+				elif x==14:
+					voltage = float(packet.split(',', 18)[x])
+				elif x==15:
+					current = float(packet.split(',', 18)[x])
+				elif x==16:
+					power = float(packet.split(',', 18)[x])
+				elif x==17:
+					cumPower = float(packet.split(',', 18)[x])
+				else:
+					val = float(packet.split(',', 18)[x])
+					dataList.append(val)
 				numpyArray = np.append(numpyArray, dataList)
 				numpyArrayIndex += 1
-				print("append: " + numpyArray)
+				print("append: ", numpyArray)
 		Timer(0.001, self.readData).start()
 
 
