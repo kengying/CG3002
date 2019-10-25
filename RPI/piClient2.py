@@ -42,11 +42,11 @@ class PiClass():
 	power = 0
 	cumPower = 0
 	numpyArray = np.array([])
-	
+
 	currMove = None
 	message = None
 	lastMsgTime = None
-	
+
 	def __init__(self, IPaddress, PORT):
 		self.ipaddress = IPaddress
 		self.port = int(PORT)
@@ -75,7 +75,7 @@ class PiClass():
 		self.ser.reset_output_buffer()
 		continueReceiveData = True
 		self.ser.write(self.YES)
-		
+
 		while continueReceiveData:
 			if self.ser.in_waiting > 0:
 				packet = self.ser.readline().decode()
@@ -96,6 +96,10 @@ class PiClass():
 				else:
 					dataList = []
 					for x in range (0, 18):
+						if len(packet.split(',',18)) != 18:
+							print(packet)
+							print(len(packet.split(',',18)))
+							break
 						if x==0 or x==7:
 							continue
 						elif x==14:
@@ -114,16 +118,16 @@ class PiClass():
 						self.numpyArray = np.append(self.numpyArray, dataList)
 					else:
 						self.numpyArray = np.vstack([self.numpyArray, dataList])
-			
+
 			else:
 				self.ser.write(self.YES)
-			
-			if len(self.numpyArray) > 127:
+
+			if len(self.numpyArray) > 128:
 				self.ser.write(self.NACK)
 				continueReceiveData = False
 
 	def createMsg(self):
-		actions = ['handmotor', 'bunny', 'tapshoulder', 'rocket', 'cowboy', 'hunchback', 'jamesbond', 'chicken', 'movingsalute', 'whip', 'logout']
+		actions = ['handmotor', 'bunny', 'tapshoulders', 'rocket', 'cowboy', 'hunchback', 'jamesbond', 'chicken', 'movingsalute', 'whip', 'logout']
 
 		if self.currMove == None:
 			self.message = None
@@ -135,7 +139,7 @@ class PiClass():
 		self.setup()
 		while self.handshake() is False:
 			continue
-		
+
 		SECRET_KEY = bytes("dancedancedance!", 'utf8')
 		# setup connection
 		print('Connecting to server')
@@ -145,13 +149,13 @@ class PiClass():
 		self.lastMsgTime = time.time()
 
 		while True:
-			
+
 			# ML code that will return an index
 			self.currMove=None
 			continuePredict = True
 			count = 0
 			predictIndex = [0,0,0,0,0]
-			
+
 			while(continuePredict):
 
 				self.readData()
@@ -164,25 +168,21 @@ class PiClass():
 				print(temp)
 
 				# index 5 is standing still
-				if temp == 5:
-					continue
-				else:
+				if temp !=5:
 					predictIndex[temp] += 1
 
 				count += 1
 				#print(self.count)
 				self.numpyArray = np.array([])
-
 				# check prediction accuracy every 3 times
 				if count >= 3:
 					for x in range (0, 5):
 						if predictIndex[x] > 1:
 							self.currMove = x
-					#print(self.currMove)
 					predictIndex = [0,0,0,0,0]
 					count = 0
 					continuePredict = False
-			
+
 			self.createMsg()
 
 			# send msg at an interval of 3s
