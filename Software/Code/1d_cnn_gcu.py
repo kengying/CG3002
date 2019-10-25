@@ -39,54 +39,68 @@ from sklearn.metrics import confusion_matrix
 # tf.logging.set_verbosity(tf.logging.ERROR)
 # %matplotlib inline
 
-# load a single file as a numpy array
-def load_file(filepath):
-    dataframe = pd.read_csv(filepath, header=None, delim_whitespace=True)
-    return dataframe.values
+WINDOW_SIZE = 128
+OVERLAP = 0.5
 
-# load a list of files and return as a 3d numpy array
-def load_group(filenames, prefix=''):
-    loaded = list()
-    for name in filenames:
-        data = load_file(prefix + name)
-        loaded.append(data)
-    # stack group so that features are the 3rd dimension
-    loaded = np.dstack(loaded)
-    return loaded
+def sliding_window(data, width=WINDOW_SIZE, overlap=OVERLAP):
+    windows = list()
+    current_index = 0
+    if overlap < 0 or overlap >= 1:
+        print("Invalid overlap value.")
+        return None
+    while True:
+        next_index = current_index + width
+        if next_index >= len(data):
+            break
+        windows.append(data[current_index:next_index])
+        current_index += max(int((1-overlap)*width), 1)
+    return windows
 
-# load a dataset group, such as train or test
-def load_dataset_group(group, prefix=''):
-    filepath = prefix + group + '/Inertial Signals/'
-    # load all 9 files as a single array
-    filenames = list()
-    # total acceleration
-    filenames += ['total_acc_x_'+group+'.txt', 'total_acc_y_'+group+'.txt', 'total_acc_z_'+group+'.txt']
-    # body acceleration
-    filenames += ['body_acc_x_'+group+'.txt', 'body_acc_y_'+group+'.txt', 'body_acc_z_'+group+'.txt']
-    # body gyroscope
-    filenames += ['body_gyro_x_'+group+'.txt', 'body_gyro_y_'+group+'.txt', 'body_gyro_z_'+group+'.txt']
-    # load input data
-    X = load_group(filenames, filepath)
-    # load class output
-    y = load_file(prefix + group + '/y_'+group+'.txt')
-    return X, y
+import glob
 
-# load the dataset, returns train and test X and y elements
-def load_dataset(prefix=''):
-    # load all train
-    trainX, trainy = load_dataset_group('train', prefix + '../datasets/UCI HAR Dataset/UCI HAR Dataset/')
-    # load all test
-    testX, testy = load_dataset_group('test', prefix + '../datasets/UCI HAR Dataset/UCI HAR Dataset/')
-    # zero-offset class values
-    trainy = trainy - 1
-    testy = testy - 1
-    # one hot encode y
-    trainy = to_categorical(trainy)
-    testy = to_categorical(testy)
-    print(trainX.shape, trainy.shape, testX.shape, testy.shape)
-    return trainX, trainy, testX, testy
+def generate_train_test():
+    path = '../datasets/here'
 
-# x_train, y_train, x_test, y_test = load_dataset()
+    labels=['bunny','cowboy','handmotor','rocket','tapshoulder']
+    classes={
+        'bunny':1,
+        'cowboy':2,
+        'handmotor':3,
+        'rocket':4,
+        'tapshoulder':5
+    }
+
+    x_train = []
+    y_train = []
+    x_test = []
+    y_test = []
+    for label in labels:
+        train_dir = path + "/train/" + label
+        train_files = glob.glob(train_dir + "/*.csv")
+        for filename in train_files:
+            data = pd.read_csv(filename, header=None, usecols=range(0,12)).values
+            windows = sliding_window(data)
+            x_train = x_train + windows
+            y_train = y_train + [classes[label]]*len(windows)
+
+        test_dir = path + "/test/" + label
+        test_files = glob.glob(test_dir + "/*.csv")
+        for filename in test_files:
+            data = pd.read_csv(filename, header=None, usecols=range(0,12)).values
+            windows = sliding_window(data)
+            x_test = x_test + windows
+            y_test = y_test + [classes[label]]*len(windows)
+
+    x_train = np.array(x_train)
+    y_train = to_categorical(np.array(y_train)-1)
+    x_test = np.array(x_test)
+    y_test = to_categorical(np.array(y_test)-1)
+#     print(x_train.shape, y_train.shape, x_test.shape, y_test.shape)
+
+    # x_train, x_test, y_train, y_test = train_test_split(x_train, y_train, stratify=y_train, test_size=0.33, shuffle= True)
+    # print(x_train.shape, y_train.shape, x_test.shape, y_test.shape)
+    
+    return x_train, y_train, x_test, y_test
 
 # Helper functions
 
@@ -161,7 +175,7 @@ def create_model(x_train, y_train):
     return model
 
 def evaluate_model(x_train, y_train, x_test, y_test, cnn_model):
-    EPOCHS = 100
+    EPOCHS = 50
     BATCH_SIZE = 32
     
     epochs, batch_size = EPOCHS, BATCH_SIZE
@@ -171,10 +185,10 @@ def evaluate_model(x_train, y_train, x_test, y_test, cnn_model):
                                                               test_size=0.33, shuffle= True)
     
     # Configure model callbacks including early stopping routine
-	PATIENCE_NUM = 10
+    PATIENCE_NUM = 10
 
-	early_stopping = EarlyStopping(monitor='val_loss', mode='min', verbose=0, patience=PATIENCE_NUM)
-	model_checkpoint = ModelCheckpoint('best_model.h5', monitor='val_acc', mode='max', verbose=0, save_best_only=True)
+    early_stopping = EarlyStopping(monitor='val_loss', mode='min', verbose=0, patience=PATIENCE_NUM)
+    model_checkpoint = ModelCheckpoint('best_model.h5', monitor='val_acc', mode='max', verbose=0, save_best_only=True)
 
     # Fit network
 #     model.fit(x_train, y_train, validation_split=0.2, epochs=epochs, batch_size=batch_size, verbose=1)
@@ -182,29 +196,29 @@ def evaluate_model(x_train, y_train, x_test, y_test, cnn_model):
                         verbose=0, callbacks=[early_stopping, model_checkpoint])
     saved_model = load_model('best_model.h5')
     
-    # summarize history for accuracy
-    plt.plot(history.history['acc'])
-    plt.plot(history.history['val_acc'])
-    plt.title('model accuracy')
-    plt.ylabel('accuracy')
-    plt.xlabel('epoch')
-    plt.legend(['train', 'validation'], loc='upper left')
-    plt.show()
-    # summarize history for loss
-    plt.plot(history.history['loss'])
-    plt.plot(history.history['val_loss'])
-    plt.title('model loss')
-    plt.ylabel('loss')
-    plt.xlabel('epoch')
-    plt.legend(['train', 'validation'], loc='upper left')
-    plt.show()
+#     # summarize history for accuracy
+#     plt.plot(history.history['acc'])
+#     plt.plot(history.history['val_acc'])
+#     plt.title('model accuracy')
+#     plt.ylabel('accuracy')
+#     plt.xlabel('epoch')
+#     plt.legend(['train', 'validation'], loc='upper left')
+#     plt.show()
+#     # summarize history for loss
+#     plt.plot(history.history['loss'])
+#     plt.plot(history.history['val_loss'])
+#     plt.title('model loss')
+#     plt.ylabel('loss')
+#     plt.xlabel('epoch')
+#     plt.legend(['train', 'validation'], loc='upper left')
+#     plt.show()
     
-    # Confusion matrix
-    y_pred = saved_model.predict_classes(x_test, batch_size, verbose=0)
-    cm = confusion_matrix(np.argmax(y_test, axis=1), y_pred)
-    labels=['WALKING','WALKING_UPSTAIRS','WALKING_DOWNSTAIRS','SITTING','STANDING','LAYING']
-    cm_analysis(cm, labels, ymap=None, figsize=(10,10))
-    print(cm)
+#     # Confusion matrix
+#     y_pred = saved_model.predict_classes(x_test, batch_size, verbose=0)
+#     cm = confusion_matrix(np.argmax(y_test, axis=1), y_pred)
+#     labels=['bunny','cowboy','handmotor','rocket','tapshoulder']
+#     cm_analysis(cm, labels, ymap=None, figsize=(10,10))
+#     print(cm)
     
     # Evaluate model
     _, train_acc = saved_model.evaluate(x_train, y_train, verbose=0)
@@ -214,8 +228,6 @@ def evaluate_model(x_train, y_train, x_test, y_test, cnn_model):
 
 # 6. Evaluate the model
 
-# create_model(x_train, y_train).summary()
-
 # Summarize scores
 def summarize_results(scores):
     print(scores)
@@ -224,18 +236,49 @@ def summarize_results(scores):
 
 # Main function
 def cnn_main():
-	x_train, y_train, x_test, y_test = load_dataset()
+    x_train, y_train, x_test, y_test = generate_train_test()
+    
+#     create_model(x_train, y_train).summary()
 
-	REPEATS_NUM = 1
+    REPEATS_NUM = 1
 
-	# Repeat experiment
-	scores = list()
-	for r in range(REPEATS_NUM):
-	    cnn_model = create_model(x_train, y_train)
-	    score = evaluate_model(x_train, y_train, x_test, y_test, cnn_model)
-	    score = score * 100.0
-	    print('>#%d: %.3f' % (r+1, score))
-	    scores.append(score)
+    # Repeat experiment
+    scores = list()
+    for r in range(REPEATS_NUM):
+        cnn_model = create_model(x_train, y_train)
+        score = evaluate_model(x_train, y_train, x_test, y_test, cnn_model)
+        score = score * 100.0
+        print('>#%d: %.3f' % (r+1, score))
+        scores.append(score)
 
-	# Summarize results
-	summarize_results(scores)
+    # Summarize results
+    summarize_results(scores)
+
+def get_cnn_model():
+    x_train, y_train, x_test, y_test = generate_train_test()
+    cnn_model = create_model(x_train, y_train)
+    
+    EPOCHS = 50
+    BATCH_SIZE = 32
+    
+    epochs, batch_size = EPOCHS, BATCH_SIZE
+    model = cnn_model
+    
+    x_train_2, x_valid, y_train_2, y_valid = train_test_split(x_train, y_train, stratify=y_train, 
+                                                              test_size=0.33, shuffle= True)
+    
+    # Configure model callbacks including early stopping routine
+    PATIENCE_NUM = 10
+
+    early_stopping = EarlyStopping(monitor='val_loss', mode='min', verbose=0, patience=PATIENCE_NUM)
+    model_checkpoint = ModelCheckpoint('best_model.h5', monitor='val_acc', mode='max', verbose=0, save_best_only=True)
+
+    # Fit network
+#     model.fit(x_train, y_train, validation_split=0.2, epochs=epochs, batch_size=batch_size, verbose=1)
+    history = model.fit(x_train_2, y_train_2, validation_data=(x_valid, y_valid), epochs=epochs, batch_size=batch_size,
+                        verbose=0, callbacks=[early_stopping, model_checkpoint])
+    saved_model = load_model('best_model.h5')
+    
+    return saved_model
+
+# cnn_main()
