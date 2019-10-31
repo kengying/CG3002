@@ -111,7 +111,7 @@ void setup() {
   
   Serial.begin(115200);
   Serial1.begin(115200);
-//  Serial.println("SET UP");
+  Serial.println("SET UP");
   
  startHandshake();
   
