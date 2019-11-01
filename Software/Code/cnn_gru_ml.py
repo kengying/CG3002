@@ -3,7 +3,7 @@ import numpy as np
 from tensorflow.keras.models import load_model
 
 def cnn_load():
-    model = load_model('cnn_model.h5')
+    model = load_model('best_model.h5')
     return model
 
 def cnn_predict(model, x_test):
