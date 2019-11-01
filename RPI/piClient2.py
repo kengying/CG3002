@@ -177,7 +177,7 @@ class PiClass():
 				count += 1
 				#print(self.count)
 				#self.numpyArray = self.numpyArray[0:31,:]
-				self.numpyArray = self.numpyArray[]
+				self.numpyArray = np.array([])
 				# check prediction accuracy every 3 times
 				if count >= 3:
 					for x in range (0, 5):
