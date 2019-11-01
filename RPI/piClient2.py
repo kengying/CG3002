@@ -9,7 +9,8 @@ import sys
 import numpy as np
 
 from PredictMove import predictMain
-#from cnn import cnn_main
+from cnn_gru_ml import cnn_predict
+from cnn_gru_ml import cnn_load
 
 #from Crypto.Util.Padding import pad
 from Crypto import Random
@@ -147,6 +148,7 @@ class PiClass():
 		self.s.connect((self.ipaddress, self.port))
 		print("Connected to server " +self.ipaddress+ ", port: " +str(self.port))
 		self.lastMsgTime = time.time()
+		model = cnn_load()
 
 		while True:
 
@@ -162,7 +164,8 @@ class PiClass():
 
 				#print(numpyArray)
 				print("run ML")
-				temp = predictMain(self.numpyArray)
+				#temp = predictMain(self.numpyArray)
+				temp = cnn_predict(model, self.numpyArray)
 				#self.temp = cnn_main(numpyArray)
 				#self.temp = 1
 				print(temp)
@@ -173,7 +176,8 @@ class PiClass():
 
 				count += 1
 				#print(self.count)
-				self.numpyArray = self.numpyArray[0:31,:]
+				#self.numpyArray = self.numpyArray[0:31,:]
+				self.numpyArray = self.numpyArray[]
 				# check prediction accuracy every 3 times
 				if count >= 3:
 					for x in range (0, 5):
