@@ -82,6 +82,7 @@ class PiClass():
 				packet = self.ser.readline().decode()
 				packet = packet.strip()
 				#print(packet)
+				#print(packet.length)
 
 				checkSum = packet.rsplit(",", 1)[1]
 				packet = packet.rsplit(",", 1)[0]
@@ -123,12 +124,12 @@ class PiClass():
 			else:
 				self.ser.write(self.YES)
 
-			if len(self.numpyArray) > 128:
+			if len(self.numpyArray) > 127:
 				self.ser.write(self.NACK)
 				continueReceiveData = False
 
 	def createMsg(self):
-		actions = ['handmotor', 'bunny', 'tapshoulders', 'rocket', 'cowboy', 'hunchback', 'jamesbond', 'chicken', 'movingsalute', 'whip', 'logout']
+		actions = ['handmotor', 'bunny', 'tapshoulders', 'rocket', 'cowboy', 'hunchback', 'jamesbond', 'chicken', 'movingsalute', 'whip', 'logout', 'idle']
 
 		if self.currMove == None:
 			self.message = None
@@ -156,7 +157,7 @@ class PiClass():
 			self.currMove=None
 			continuePredict = True
 			count = 0
-			predictIndex = [0,0,0,0,0]
+			predictIndex = [0,0,0,0,0,0,0,0,0,0]
 
 			while(continuePredict):
 
@@ -165,13 +166,13 @@ class PiClass():
 				#print(numpyArray)
 				print("run ML")
 				#temp = predictMain(self.numpyArray)
-				temp = cnn_predict(model, self.numpyArray)
-				#self.temp = cnn_main(numpyArray)
+				temp = cnn_predict(model, np.array(self.numpyArray))[0]
+
 				#self.temp = 1
 				print(temp)
 
 				# index 5 is standing still
-				if temp !=5:
+				if temp < 10:
 					predictIndex[temp] += 1
 
 				count += 1
