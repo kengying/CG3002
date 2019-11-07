@@ -47,6 +47,8 @@ class PiClass():
 	currMove = None
 	message = None
 	lastMsgTime = None
+	
+	clearBuffer = True
 
 	def __init__(self, IPaddress, PORT):
 		self.ipaddress = IPaddress
@@ -72,8 +74,12 @@ class PiClass():
 		return False
 
 	def readData(self):
-		self.ser.reset_input_buffer()
-		self.ser.reset_output_buffer()
+	
+		if(clearBuffer):
+			self.ser.reset_input_buffer()
+			self.ser.reset_output_buffer()
+			clearBuffer = False
+
 		continueReceiveData = True
 		self.ser.write(self.YES)
 
@@ -154,7 +160,7 @@ class PiClass():
 		while True:
 
 			# ML code that will return an index
-			self.currMove=None
+			self.currMove = None
 			continuePredict = True
 			count = 0
 			predictIndex = [0,0,0,0,0,0,0,0,0,0]
@@ -171,20 +177,18 @@ class PiClass():
 				#self.temp = 1
 				print(temp)
 
-				# index 5 is standing still
+				# ignore 10 and 11, logout and idle
 				if temp < 10:
 					predictIndex[temp] += 1
 
 				count += 1
 				#print(self.count)
-				#self.numpyArray = self.numpyArray[0:31,:]
-				self.numpyArray = np.array([])
+				self.numpyArray = self.numpyArray[0:31,:]
 				# check prediction accuracy every 3 times
 				if count >= 3:
 					for x in range (0, 5):
 						if predictIndex[x] > 1:
 							self.currMove = x
-					predictIndex = [0,0,0,0,0]
 					count = 0
 					continuePredict = False
 
@@ -200,12 +204,16 @@ class PiClass():
 				encodedMsg = base64.b64encode(iv + encryptMsg)
 				self.lastMsgTime = time.time()
 
+				if self.currMove == 10: #logout
+					break
+				
 				self.s.send(encodedMsg)
+				predictIndex = [0,0,0,0,0,0,0,0,0,0]
+				self.numpyArray = np.array([])
+				clearBuffer = True
 				#time.sleep(5)
 
-			#if self.currMove == 10: (ending move)
-				#break
-		#self.s.close()
+		self.s.close()
 
 if __name__ == '__main__':
 
