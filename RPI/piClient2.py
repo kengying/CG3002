@@ -189,7 +189,6 @@ class PiClass():
 					for x in range (0, 5):
 						if predictIndex[x] > 1:
 							self.currMove = x
-					count = 0
 					continuePredict = False
 
 			self.createMsg()
@@ -209,6 +208,7 @@ class PiClass():
 				
 				self.s.send(encodedMsg)
 				predictIndex = [0,0,0,0,0,0,0,0,0,0]
+				count = 0
 				self.numpyArray = np.array([])
 				clearBuffer = True
 				#time.sleep(5)
