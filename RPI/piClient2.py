@@ -183,12 +183,11 @@ class PiClass():
 
 				count += 1
 				#print(self.count)
-				self.numpyArray = self.numpyArray[0:61,:]
+				self.numpyArray = self.numpyArray[0:64,:]
 				# check prediction accuracy every 3 times
 				if count >= 4:
 					for x in range (0, 10):
 						if predictIndex[x] > 2:
-							print(self.currMove)
 							self.currMove = x
 							continuePredict = False
 

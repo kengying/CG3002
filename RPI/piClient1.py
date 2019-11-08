@@ -9,7 +9,8 @@ import sys
 import numpy as np
 
 from PredictMove import predictMain
-#from cnn import cnn_main
+from cnn_gru_ml import cnn_predict
+from cnn_gru_ml import cnn_load
 
 #from Crypto.Util.Padding import pad
 from Crypto import Random
@@ -30,19 +31,26 @@ def pad(data_to_pad, block_size, style='pkcs7'):
 		raise ValueError("Unknown padding style")
 	return data_to_pad + padding
 
-# global variable decleration
-voltage = 0
-current = 0
-power = 0
-cumPower = 0
-numpyArray = np.array([])
+class PiClass():
+	HELLO = ('H').encode()
+	ACK = ('A').encode()
+	NACK = ('N').encode()
+	READY = ('R').encode()
+	YES = ('Y').encode()
 
-HELLO = ('H').encode()
-ACK = ('A').encode()
-NACK = ('N').encode()
-READY = ('R').encode()
+	voltage = 0
+	current = 0
+	power = 0
+	cumPower = 0
+	numpyArray = np.array([])
 
-class SerClass:
+	currMove = None
+	message = None
+	lastMsgTime = None
+
+	def __init__(self, IPaddress, PORT):
+		self.ipaddress = IPaddress
+		self.port = int(PORT)
 
 	def setup(self):
 		self.ser = serial.Serial("/dev/serial0", 115200)
@@ -51,94 +59,89 @@ class SerClass:
 
 	def handshake(self):
 		print("InitiateHandshake")
-		self.ser.write(HELLO)
+		self.ser.write(self.HELLO)
 		time.sleep(1)
 		if self.ser.in_waiting > 0:
 			reply = self.ser.read().decode()
 			if(reply == 'A'):
-				self.ser.write(ACK)
+				self.ser.write(self.ACK)
 				print('Handshake Complete')
 				return True
 			else:
 				print('pending')
 		return False
 
+	def readData(self):
+		self.ser.reset_input_buffer()
+		self.ser.reset_output_buffer()
+		continueReceiveData = True
+		self.ser.write(self.YES)
 
-	def run(self):
-		global dataQueue
+		while continueReceiveData:
+			if self.ser.in_waiting > 0:
+				packet = self.ser.readline().decode()
+				packet = packet.strip()
+				#print(packet)
+				#print(packet.length)
 
-		self.setup()
-		while self.handshake() is False:
-			continue
-		dataThread = DataReceiveClass(self.ser)
-		dataThread.start()
+				checkSum = packet.rsplit(",", 1)[1]
+				packet = packet.rsplit(",", 1)[0]
 
-class SocketClass():
-	currMove = None
-	message = None
-	RFMLmove = None
-	slidingMove = None
-	lastMsgTime = None
+				checkList = bytearray(packet.encode())
+				testSum = 0
 
-	def __init__(self, IPaddress, PORT):
-		self.ipaddress = IPaddress
-		self.port = int(PORT)
+				for x in range(len(packet)):
+					testSum ^= checkList[x]
+
+				if(testSum == int(checkSum)):
+					self.ser.write(self.NACK)
+				else:
+					dataList = []
+					for x in range (0, 18):
+						if len(packet.split(',',18)) != 18:
+							print(packet)
+							print(len(packet.split(',',18)))
+							break
+						if x==0 or x==7:
+							continue
+						elif x==14:
+							self.voltage = float(packet.split(',', 18)[x])
+						elif x==15:
+							self.current = float(packet.split(',', 18)[x])
+						elif x==16:
+							self.power = float(packet.split(',', 18)[x])
+						elif x==17:
+							self.cumPower = float(packet.split(',', 18)[x])
+						else:
+							val = float(packet.split(',', 18)[x])
+							dataList.append(val)
+					#print(numpyArray)
+					if self.numpyArray.size == 0:
+						self.numpyArray = np.append(self.numpyArray, dataList)
+					else:
+						self.numpyArray = np.vstack([self.numpyArray, dataList])
+
+			else:
+				self.ser.write(self.YES)
+
+			if len(self.numpyArray) > 127:
+				self.ser.write(self.NACK)
+				continueReceiveData = False
 
 	def createMsg(self):
-		global voltage
-		global current
-		global power
-		global cumPower
-
-		self.actions = ['handmotor', 'bunny', 'tapshoulder', 'rocket', 'cowboy', 'hunchback', 'jamesbond', 'chicken', 'movingsalute', 'whip', 'logout']
+		actions = ['handmotor', 'bunny', 'tapshoulders', 'rocket', 'cowboy', 'hunchback', 'jamesbond', 'chicken', 'movingsalute', 'whip', 'logout', 'idle']
 
 		if self.currMove == None:
 			self.message = None
 		else:
-			self.message = ("#" + self.actions[self.currMove] + "|" + str(format(voltage, '.2f')) + "|" + str(format(current, '.2f')) + "|" + str(format(power, '.2f')) + "|" + str(format(cumPower, '.2f')) + "|").encode('utf8').strip()
+			self.message = ("#" + actions[self.currMove] + "|" + str(format(self.voltage, '.2f')) + "|" + str(format(self.current, '.2f')) + "|" + str(format(self.power, '.2f')) + "|" + str(format(self.cumPower, '.2f')) + "|").encode('utf8').strip()
 			self.currMove = None
 
-	def machine(self):
-		global numpyArray
-
-		# ML code that will return an index
-		self.currMove=None
-		self.continuePredict = True
-		self.predictMove = [None, None, None]
-		self.count = 0
-		self.predictIndex = [0,0,0,0,0]
-		while(self.continuePredict):
-			# pass array to ML only when there is length is 128
-			# reset to empty
-			if len(numpyArray) > 128:
-				#print(numpyArray)
-				print("run ML")
-				self.temp = predictMain(numpyArray)
-				#self.temp = cnn_main(numpyArray)
-				#self.temp = 1
-				print(self.temp)
-
-				# index 5 is standing still
-				if self.temp == 5:
-					continue
-				else:
-					self.predictIndex[self.temp] += 1
-
-				self.count += 1
-				#print(self.count)
-				numpyArray = np.array([])
-
-			# check prediction accuracy every 3 times
-			if self.count >= 3:
-				for x in range (0, 5):
-					if self.predictIndex[x] > 1:
-						self.currMove = x
-				#print(self.currMove)
-				self.predictIndex = [0,0,0,0,0]
-				self.count = 0
-				self.continuePredict = False
-
 	def run(self):
+		self.setup()
+		while self.handshake() is False:
+			continue
+
 		SECRET_KEY = bytes("dancedancedance!", 'utf8')
 		# setup connection
 		print('Connecting to server')
@@ -146,9 +149,43 @@ class SocketClass():
 		self.s.connect((self.ipaddress, self.port))
 		print("Connected to server " +self.ipaddress+ ", port: " +str(self.port))
 		self.lastMsgTime = time.time()
+		model = cnn_load()
 
 		while True:
-			self.machine()
+
+			# ML code that will return an index
+			self.currMove=None
+			continuePredict = True
+			count = 0
+			predictIndex = [0,0,0,0,0,0,0,0,0,0]
+
+			while(continuePredict):
+
+				self.readData()
+
+				#print(numpyArray)
+				print("run ML")
+				#temp = predictMain(self.numpyArray)
+				temp = cnn_predict(model, np.array(self.numpyArray))[0]
+
+				#self.temp = 1
+				print(temp)
+
+				# index 5 is standing still
+				if temp < 10:
+					predictIndex[temp] += 1
+
+				count += 1
+				#print(self.count)
+				#self.numpyArray = self.numpyArray[0:31,:]
+				self.numpyArray = np.array([])
+				# check prediction accuracy every 3 times
+				if count >= 4:
+					for x in range (0, 10):
+						if predictIndex[x] > 2:
+							self.currMove = x
+							continuePredict = False
+
 			self.createMsg()
 
 			# send msg at an interval of 3s
@@ -160,73 +197,16 @@ class SocketClass():
 				encryptMsg = cipher.encrypt(padMessage)
 				encodedMsg = base64.b64encode(iv + encryptMsg)
 				self.lastMsgTime = time.time()
+				
+				if self.currMove == 10: # logout
+					break
 
-				time.sleep(5)
 				self.s.send(encodedMsg)
+				predictIndex = [0,0,0,0,0,0,0,0,0,0]
+				count = 0
+				#time.sleep(5)
 
-			#if self.currMove == 10: (ending move)
-				#break
 		self.s.close()
-
-class DataReceiveClass(Thread):
-	#global dataQueue
-
-	def __init__(self, ser):
-		Thread.__init__(self)
-		self.ser = ser
-
-	def run(self):
-		self.readData()
-
-	def readData(self):
-		global voltage
-		global current
-		global power
-		global cumPower
-		global numpyArray
-
-		packet = self.ser.readline().decode()
-		packet = packet.strip()
-		#print(packet)
-
-		checkSum = packet.rsplit(",", 1)[1]
-		packet = packet.rsplit(",", 1)[0]
-
-		checkList = bytearray(packet.encode())
-		testSum = 0
-
-		for x in range(len(packet)):
-			testSum ^= checkList[x]
-
-		if(testSum == int(checkSum)):
-			self.ser.write(NACK)
-		else:
-			self.ser.write(ACK)
-
-			dataList = []
-			for x in range (0, 18):
-				if x==0 or x==7:
-					continue
-				elif x==14:
-					voltage = float(packet.split(',', 18)[x])
-				elif x==15:
-					current = float(packet.split(',', 18)[x])
-				elif x==16:
-					power = float(packet.split(',', 18)[x])
-				elif x==17:
-					cumPower = float(packet.split(',', 18)[x])
-				else:
-					val = float(packet.split(',', 18)[x])
-					dataList.append(val)
-			#print(numpyArray)
-			if numpyArray.size == 0:
-				numpyArray = np.append(numpyArray, dataList)
-			else:
-				numpyArray = np.vstack([numpyArray, dataList])
-			#print(dataList)
-			#print("curr: ", numpyArray)
-		Timer(0.001, self.readData).start()
-
 
 if __name__ == '__main__':
 
@@ -235,13 +215,5 @@ if __name__ == '__main__':
 		print('python3 piClient1.py [IP address] [Port]')
 		sys.exit()
 
-	SerComm = SerClass()
-	#SerComm.run()
-	serThread = Thread(target=SerComm.run)
-
-	SocketComm = SocketClass(sys.argv[1], sys.argv[2])
-	#SocketComm.run()
-	socketThread = Thread(target=SocketComm.run)
-
-	serThread.start()
-	socketThread.start()
+	piComm = PiClass(sys.argv[1], sys.argv[2])
+	piComm.run()

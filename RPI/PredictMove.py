@@ -80,5 +80,5 @@ def predictMain(X):
     X = preprocessing.normalize(X)
     X = extract_features_labels_predict(X,T,N,f_s,denom)
 
-    clf = joblib.load("RFmodel.pkl")
+    clf = joblib.load("RFmodel10Moves.pkl")
     return (int(clf.predict(X)[0]))
