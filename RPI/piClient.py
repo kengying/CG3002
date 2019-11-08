@@ -160,7 +160,7 @@ class DataReceiveClass(Thread):
 		else:
 #			print("populate")
 			self.ser.write(ACK)
-			with open('/home/pi/Desktop/CG3002/RPI/dataset_10/syed/logout_syed.csv', 'a') as csvfile:
+			with open('/home/pi/Desktop/CG3002/RPI/dataset_10/son/standingstill_son.csv', 'a') as csvfile:
 				filewriter = csv.writer(csvfile, delimiter=',', quoting=csv.QUOTE_NONE)
 				dataList = []
 				for x in range (0, 18):
@@ -177,7 +177,7 @@ class DataReceiveClass(Thread):
 					else:
 						val = float(packet.split(',', 18)[x])
 						dataList.append(val)
-				dataList.append(10) # append fixed action
+				dataList.append(11) # append fixed action
 #				print(dataList)
 #				print(voltage)
 #				print(current)
@@ -197,4 +197,4 @@ if __name__ == '__main__':
 	socketThread = Thread(target=SocketComm.run)
 
 	serThread.start()
-	socketThread.start()
+	#socketThread.start()

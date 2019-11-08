@@ -74,11 +74,11 @@ class PiClass():
 		return False
 
 	def readData(self):
-	
-		if(clearBuffer):
+
+		if(self.clearBuffer):
 			self.ser.reset_input_buffer()
 			self.ser.reset_output_buffer()
-			clearBuffer = False
+			self.clearBuffer = False
 
 		continueReceiveData = True
 		self.ser.write(self.YES)
@@ -183,13 +183,14 @@ class PiClass():
 
 				count += 1
 				#print(self.count)
-				self.numpyArray = self.numpyArray[0:31,:]
+				self.numpyArray = self.numpyArray[0:61,:]
 				# check prediction accuracy every 3 times
-				if count >= 3:
-					for x in range (0, 5):
-						if predictIndex[x] > 1:
+				if count >= 4:
+					for x in range (0, 10):
+						if predictIndex[x] > 2:
+							print(self.currMove)
 							self.currMove = x
-					continuePredict = False
+							continuePredict = False
 
 			self.createMsg()
 
@@ -205,13 +206,13 @@ class PiClass():
 
 				if self.currMove == 10: #logout
 					break
-				
+
 				self.s.send(encodedMsg)
 				predictIndex = [0,0,0,0,0,0,0,0,0,0]
 				count = 0
 				self.numpyArray = np.array([])
-				clearBuffer = True
-				#time.sleep(5)
+				self.clearBuffer = True
+				time.sleep(1)
 
 		self.s.close()
 
