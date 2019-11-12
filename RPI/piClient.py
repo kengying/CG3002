@@ -160,7 +160,7 @@ class DataReceiveClass(Thread):
 		else:
 #			print("populate")
 			self.ser.write(ACK)
-			with open('/home/pi/Desktop/CG3002/RPI/dataset/dataset_val/cowboy0_val.csv', 'a') as csvfile:
+			with open('/home/pi/Desktop/CG3002/RPI/dataset/dataset_val/hunchback_redo_val.csv', 'a') as csvfile:
 				filewriter = csv.writer(csvfile, delimiter=',', quoting=csv.QUOTE_NONE)
 				dataList = []
 				for x in range (0, 18):

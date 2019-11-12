@@ -8,7 +8,7 @@ import random
 import sys
 import numpy as np
 
-from PredictMove import predictMain
+#from PredictMove import predictMain
 from cnn_gru_ml import cnn_predict
 from cnn_gru_ml import cnn_load
 
@@ -37,6 +37,7 @@ class PiClass():
 	NACK = ('N').encode()
 	READY = ('R').encode()
 	YES = ('Y').encode()
+	isTrue = True
 
 	voltage = 0
 	current = 0
@@ -47,7 +48,7 @@ class PiClass():
 	currMove = None
 	message = None
 	lastMsgTime = None
-	
+
 	clearBuffer = True
 
 	def __init__(self, IPaddress, PORT):
@@ -144,6 +145,8 @@ class PiClass():
 			self.currMove = None
 
 	def run(self):
+		actions = ['handmotor', 'bunny', 'tapshoulders', 'rocket', 'cowboy', 'hunchback', 'jamesbond', 'chicken', 'movingsalute', 'whip', 'logout', 'idle']
+
 		self.setup()
 		while self.handshake() is False:
 			continue
@@ -157,37 +160,39 @@ class PiClass():
 		self.lastMsgTime = time.time()
 		model = cnn_load()
 
-		while True:
+		while self.isTrue:
 
 			# ML code that will return an index
 			self.currMove = None
 			continuePredict = True
 			count = 0
-			predictIndex = [0,0,0,0,0,0,0,0,0,0]
+			predictIndex = [0,0,0,0,0,0,0,0,0,0,0]
 
 			while(continuePredict):
 
 				self.readData()
 
 				#print(numpyArray)
-				print("run ML")
+
 				#temp = predictMain(self.numpyArray)
 				temp = cnn_predict(model, np.array(self.numpyArray))[0]
 
 				#self.temp = 1
 				print(temp)
+				print(actions[temp])
 
 				# ignore 10 and 11, logout and idle
-				if temp < 10:
+				if temp < 11:
 					predictIndex[temp] += 1
 
 				count += 1
 				#print(self.count)
-				self.numpyArray = self.numpyArray[0:64,:]
+				self.numpyArray = self.numpyArray[64:128,:]
+				#self.numpyArray = np.array([])
 				# check prediction accuracy every 3 times
-				if count >= 4:
-					for x in range (0, 10):
-						if predictIndex[x] > 2:
+				if count >= 5:
+					for x in range (0, 11):
+						if predictIndex[x] > 4:
 							self.currMove = x
 							continuePredict = False
 
@@ -203,17 +208,17 @@ class PiClass():
 				encodedMsg = base64.b64encode(iv + encryptMsg)
 				self.lastMsgTime = time.time()
 
-				if self.currMove == 10: #logout
-					break
-
 				self.s.send(encodedMsg)
-				predictIndex = [0,0,0,0,0,0,0,0,0,0]
+
+				predictIndex = [0,0,0,0,0,0,0,0,0,0,0]
 				count = 0
 				self.numpyArray = np.array([])
 				self.clearBuffer = True
-				time.sleep(1)
+				#time.sleep(1)
 
-		self.s.close()
+				if self.currMove == 10: #logout
+					self.s.close()
+					self.isTrue = False
 
 if __name__ == '__main__':
 
