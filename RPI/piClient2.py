@@ -50,6 +50,7 @@ class PiClass():
 	lastMsgTime = None
 
 	clearBuffer = True
+	logout = False
 
 	def __init__(self, IPaddress, PORT):
 		self.ipaddress = IPaddress
@@ -138,6 +139,9 @@ class PiClass():
 	def createMsg(self):
 		actions = ['handmotor', 'bunny', 'tapshoulders', 'rocket', 'cowboy', 'hunchback', 'jamesbond', 'chicken', 'movingsalute', 'whip', 'logout', 'idle']
 
+		if self.currMove == 10:
+			self.logout = True
+
 		if self.currMove == None:
 			self.message = None
 		else:
@@ -159,6 +163,7 @@ class PiClass():
 		print("Connected to server " +self.ipaddress+ ", port: " +str(self.port))
 		self.lastMsgTime = time.time()
 		model = cnn_load()
+		transition = False
 
 		while self.isTrue:
 
@@ -175,11 +180,19 @@ class PiClass():
 				#print(numpyArray)
 
 				#temp = predictMain(self.numpyArray)
+				if transition:
+					self.numpyArray = np.array([])
+					transition = False
+					continue
+
 				temp = cnn_predict(model, np.array(self.numpyArray))[0]
 
 				#self.temp = 1
 				print(temp)
 				print(actions[temp])
+
+				if temp == 0:
+					predictIndex[temp] += 2
 
 				# ignore 10 and 11, logout and idle
 				if temp < 11:
@@ -187,12 +200,12 @@ class PiClass():
 
 				count += 1
 				#print(self.count)
-				self.numpyArray = self.numpyArray[64:128,:]
+				self.numpyArray = self.numpyArray[65:128,:]
 				#self.numpyArray = np.array([])
 				# check prediction accuracy every 3 times
-				if count >= 5:
+				if count >= 4:
 					for x in range (0, 11):
-						if predictIndex[x] > 4:
+						if predictIndex[x] > 3:
 							self.currMove = x
 							continuePredict = False
 
@@ -214,11 +227,13 @@ class PiClass():
 				count = 0
 				self.numpyArray = np.array([])
 				self.clearBuffer = True
+				transition = True
 				#time.sleep(1)
 
-				if self.currMove == 10: #logout
+				if self.logout: #logout
 					self.s.close()
 					self.isTrue = False
+					print("logout!!!!!!!!!!!!!!!!!!!!!!!!!")
 
 if __name__ == '__main__':
 
