@@ -92,7 +92,8 @@ class PiClass():
 				#print(packet)
 				#print(packet.length)
 
-				checkSum = packet.rsplit(",", 1)[1]
+				#checkSum = packet.rsplit(",", 1)[1]
+				checkSum = 0
 				packet = packet.rsplit(",", 1)[0]
 
 				checkList = bytearray(packet.encode())
@@ -181,7 +182,8 @@ class PiClass():
 
 				#temp = predictMain(self.numpyArray)
 				if transition:
-					self.numpyArray = np.array([])
+					#self.numpyArray = np.array([])
+					self.numpyArray = self.numpyArray[90:128,:]
 					transition = False
 					continue
 
@@ -190,6 +192,7 @@ class PiClass():
 				#self.temp = 1
 				print(temp)
 				print(actions[temp])
+				print(time.time())
 
 				if temp == 0:
 					predictIndex[temp] += 2
@@ -200,12 +203,12 @@ class PiClass():
 
 				count += 1
 				#print(self.count)
-				self.numpyArray = self.numpyArray[65:128,:]
+				self.numpyArray = self.numpyArray[33:128,:]
 				#self.numpyArray = np.array([])
 				# check prediction accuracy every 3 times
-				if count >= 4:
+				if count >= 5:
 					for x in range (0, 11):
-						if predictIndex[x] > 3:
+						if predictIndex[x] > 4:
 							self.currMove = x
 							continuePredict = False
 
