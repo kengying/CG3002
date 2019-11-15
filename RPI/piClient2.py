@@ -132,7 +132,7 @@ class PiClass():
 			else:
 				self.ser.write(self.YES)
 
-			if len(self.numpyArray) > 127:
+			if len(self.numpyArray) > 257:
 				self.ser.write(self.NACK)
 				continueReceiveData = False
 
@@ -200,7 +200,7 @@ class PiClass():
 
 				count += 1
 				#print(self.count)
-				self.numpyArray = self.numpyArray[65:128,:]
+				self.numpyArray = self.numpyArray[65:256,:]
 				#self.numpyArray = np.array([])
 				# check prediction accuracy every 3 times
 				if count >= 4:
